@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MinIO – Object Storage</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f6c90e;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      color: #94a3b8;
+      margin-top: .4rem;
+      font-size: .95rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: .2rem .75rem;
+      font-size: .78rem;
+      color: #64748b;
+      margin-top: .6rem;
+    }
+    .badge span { color: #f6c90e; }
+
+    /* ── Grid de secciones ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .icon-list    { background: #1e3a5f; }
+    .icon-create  { background: #1a3a2a; }
+    .icon-files   { background: #2d1f4e; }
+    .icon-upload  { background: #3a1f1f; }
+    .icon-url     { background: #1f3a3a; }
+
+    .card-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    .card-header small {
+      display: block;
+      color: #64748b;
+      font-size: .78rem;
+      font-weight: 400;
+    }
+
+    /* ── Controles ── */
+    label {
+      display: block;
+      font-size: .82rem;
+      color: #94a3b8;
+      margin-bottom: .3rem;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="file"],
+    select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      padding: .5rem .75rem;
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus { border-color: #f6c90e; }
+
+    input[type="file"] { cursor: pointer; padding: .4rem .6rem; }
+    input[type="file"]::file-selector-button {
+      background: #2d3748;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 4px;
+      padding: .3rem .6rem;
+      cursor: pointer;
+      font-size: .82rem;
+      margin-right: .5rem;
+    }
+
+    /* ── Botones ── */
+    .btn {
+      width: 100%;
+      padding: .55rem 1rem;
+      border: none;
+      border-radius: 7px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover   { opacity: .88; }
+    .btn:active  { transform: scale(.97); }
+    .btn-yellow  { background: #f6c90e; color: #0f1117; }
+    .btn-green   { background: #22c55e; color: #fff; }
+    .btn-purple  { background: #a855f7; color: #fff; }
+    .btn-red     { background: #ef4444; color: #fff; }
+    .btn-teal    { background: #14b8a6; color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #475569;
+      color: #94a3b8;
+      font-size: .8rem;
+      padding: .3rem .7rem;
+      width: auto;
+    }
+    .btn-outline:hover { border-color: #f6c90e; color: #f6c90e; }
+
+    /* ── Resultado ── */
+    .result-box {
+      background: #0a0d14;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      font-family: 'Consolas', monospace;
+      font-size: .8rem;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 220px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+    .result-ok    { color: #4ade80; }
+    .result-error { color: #f87171; }
+
+    /* ── Tabla de ficheros ── */
+    .file-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+    .file-table th {
+      text-align: left;
+      color: #64748b;
+      padding: .35rem .5rem;
+      border-bottom: 1px solid #1e293b;
+    }
+    .file-table td {
+      padding: .35rem .5rem;
+      border-bottom: 1px solid #1a2033;
+      color: #cbd5e1;
+      vertical-align: middle;
+    }
+    .file-table tr:last-child td { border-bottom: none; }
+    .file-table td:nth-child(2) { color: #64748b; font-size: .75rem; }
+    .pill {
+      display: inline-block;
+      background: #1e293b;
+      border-radius: 999px;
+      padding: .1rem .5rem;
+      font-size: .73rem;
+      color: #94a3b8;
+    }
+
+    /* ── Drag & Drop zona ── */
+    .drop-zone {
+      border: 2px dashed #334155;
+      border-radius: 8px;
+      padding: 1.2rem;
+      text-align: center;
+      color: #475569;
+      font-size: .88rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over { border-color: #f6c90e; background: #1c1f2e; color: #f6c90e; }
+    .drop-zone input[type="file"] { display: none; }
+    .drop-zone .drop-icon { font-size: 1.8rem; margin-bottom: .4rem; }
+
+    /* ── URL copiable ── */
+    .url-copy {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+    .url-copy input {
+      flex: 1;
+      font-size: .78rem;
+      color: #94a3b8;
+      background: #0a0d14;
+    }
+
+    /* ── Separador entre secciones ── */
+    .section-title {
+      max-width: 1100px;
+      margin: 2rem auto .75rem;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #475569;
+      padding-left: .25rem;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f1117; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🗄️ MinIO Object Storage</h1>
+    <p>Gestiona buckets y ficheros directamente desde el navegador</p>
+    <div class="badge">API → <span>http://localhost:9000</span> &nbsp;|&nbsp; Express → <span>http://localhost:3333</span></div>
+  </header>
+
+  <!-- ── FILA 1: Buckets ── -->
+  <p class="section-title">Gestión de Buckets</p>
+  <div class="grid">
+
+    <!-- Card 1: Listar buckets -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-list">📦</div>
+        <div>
+          <h2>Listar Buckets</h2>
+          <small>GET /minio/buckets</small>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b;">
+        Devuelve todos los buckets existentes con su nombre y fecha de creación.
+      </p>
+      <button class="btn btn-yellow" onclick="listarBuckets()">Listar todos los buckets</button>
+      <div id="resultListBuckets" class="result-box">Pulsa el botón para ver los buckets…</div>
+    </div>
+
+    <!-- Card 2: Crear bucket -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-create">➕</div>
+        <div>
+          <h2>Crear Bucket</h2>
+          <small>POST /minio/buckets/:bucket</small>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b;">
+        El nombre debe estar en <strong style="color:#f6c90e">minúsculas</strong>, sin espacios ni caracteres especiales.
+      </p>
+      <div>
+        <label for="newBucketName">Nombre del bucket</label>
+        <input type="text" id="newBucketName" placeholder="ej: mis-imagenes" />
+      </div>
+      <button class="btn btn-green" onclick="crearBucket()">Crear bucket</button>
+      <div id="resultCreateBucket" class="result-box">Resultado aquí…</div>
+    </div>
+
+  </div>
+
+  <!-- ── FILA 2: Ficheros ── -->
+  <p class="section-title">Gestión de Ficheros</p>
+  <div class="grid">
+
+    <!-- Card 3: Listar ficheros -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-files">🗂️</div>
+        <div>
+          <h2>Listar Ficheros</h2>
+          <small>GET /minio/buckets/:bucket/files</small>
+        </div>
+      </div>
+      <div>
+        <label for="listBucket">Bucket</label>
+        <input type="text" id="listBucket" placeholder="mis-practicas" />
+      </div>
+      <button class="btn btn-purple" onclick="listarFicheros()">Ver ficheros del bucket</button>
+      <div id="resultListFiles" class="result-box">Selecciona un bucket y pulsa el botón…</div>
+    </div>
+
+    <!-- Card 4: Subir fichero (drag & drop) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-upload">⬆️</div>
+        <div>
+          <h2>Subir Fichero</h2>
+          <small>POST /minio/buckets/:bucket/upload</small>
+        </div>
+      </div>
+      <div>
+        <label for="uploadBucket">Bucket destino</label>
+        <input type="text" id="uploadBucket" placeholder="mis-practicas" />
+      </div>
+
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="drop-icon">📁</div>
+        <div id="dropLabel">Arrastra un fichero aquí o haz clic para seleccionarlo</div>
+        <input type="file" id="fileInput" onchange="onFileSelected(this)" />
+      </div>
+
+      <button class="btn btn-red" id="uploadBtn" onclick="subirFichero()" disabled>Subir a MinIO</button>
+      <div id="resultUpload" class="result-box">Selecciona un fichero para subir…</div>
+    </div>
+
+  </div>
+
+  <!-- ── FILA 3: Recuperar y Eliminar ── -->
+  <p class="section-title">Recuperar y Eliminar Ficheros</p>
+  <div class="grid">
+
+    <!-- Card 5: Descargar fichero -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#1a3a2a;">⬇️</div>
+        <div>
+          <h2>Recuperar Fichero</h2>
+          <small>GET /minio/buckets/:bucket/files/:filename</small>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b;">
+        Descarga el fichero <strong style="color:#f1f5f9">a través de Express</strong> usando streaming.
+        El fichero pasa por el servidor (a diferencia de la URL firmada).
+      </p>
+      <div>
+        <label for="dlBucket">Bucket</label>
+        <input type="text" id="dlBucket" placeholder="mis-practicas" />
+      </div>
+      <div>
+        <label for="dlFilename">Nombre del fichero</label>
+        <input type="text" id="dlFilename" placeholder="package.json" />
+      </div>
+      <button class="btn btn-green" onclick="descargarFichero()">⬇️ Descargar fichero</button>
+      <div id="resultDownload" class="result-box">Rellena los campos y descarga…</div>
+    </div>
+
+    <!-- Card 6: Eliminar fichero -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#3a1a1a;">🗑️</div>
+        <div>
+          <h2>Eliminar Fichero</h2>
+          <small>DELETE /minio/buckets/:bucket/files/:filename</small>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b;">
+        Compara los dos patrones de escritura de código asíncrono en Node.js.
+      </p>
+      <div>
+        <label for="delBucket">Bucket</label>
+        <input type="text" id="delBucket" placeholder="mis-practicas" />
+      </div>
+      <div>
+        <label for="delFilename">Nombre del fichero</label>
+        <input type="text" id="delFilename" placeholder="package.json" />
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <button class="btn" style="background:#f97316;color:#fff;" onclick="eliminarV1()">
+          🔗 .then/.catch
+        </button>
+        <button class="btn btn-red" onclick="eliminarV2()">
+          ⚡ async/await
+        </button>
+      </div>
+
+      <div style="background:#0a0d14;border:1px solid #1e293b;border-radius:8px;padding:.75rem;font-size:.78rem;color:#475569;line-height:1.7;">
+        <strong style="color:#94a3b8;">Promise chaining</strong> (<code style="color:#f97316;">/v1</code>)<br>
+        <code style="color:#64748b;">removeObject().then(ok).catch(err)</code><br><br>
+        <strong style="color:#94a3b8;">async / await</strong><br>
+        <code style="color:#64748b;">await removeObject() · try/catch</code>
+      </div>
+
+      <div id="resultDelete" class="result-box">Resultado de la eliminación aquí…</div>
+    </div>
+
+  </div>
+
+  <!-- ── FILA 4: URL firmada ── -->
+  <p class="section-title">URL Firmada (Presigned URL)</p>
+  <div class="grid" style="grid-template-columns: 1fr;">
+
+    <!-- Card 5: Obtener URL firmada -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-url">🔗</div>
+        <div>
+          <h2>Generar URL de Descarga Firmada</h2>
+          <small>GET /minio/buckets/:bucket/files/:filename/url</small>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:#64748b;">
+        La URL firmada permite descargar el fichero <strong style="color:#f1f5f9">directamente desde MinIO</strong>
+        sin pasar por Express, durante el tiempo indicado. Incluye una firma criptográfica que expira.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:.75rem;align-items:end;">
+        <div>
+          <label for="urlBucket">Bucket</label>
+          <input type="text" id="urlBucket" placeholder="mis-practicas" />
+        </div>
+        <div>
+          <label for="urlFilename">Nombre del fichero</label>
+          <input type="text" id="urlFilename" placeholder="package.json" />
+        </div>
+        <div>
+          <label for="urlExpira">Expira (seg)</label>
+          <input type="number" id="urlExpira" value="3600" min="60" max="604800" />
+        </div>
+      </div>
+      <button class="btn btn-teal" onclick="obtenerUrl()">Generar URL firmada</button>
+
+      <div>
+        <label>URL generada (haz clic en Copiar o ábrela en el navegador)</label>
+        <div class="url-copy">
+          <input type="text" id="urlOutput" readonly placeholder="La URL aparecerá aquí…" />
+          <button class="btn btn-outline" onclick="copiarUrl()">Copiar</button>
+          <button class="btn btn-outline" onclick="abrirUrl()">Abrir ↗</button>
+        </div>
+      </div>
+
+      <div id="resultUrl" class="result-box">Rellena los campos y pulsa "Generar URL firmada"…</div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function mostrar(id, data, ok = true) {
+      const el = document.getElementById(id)
+      el.className = 'result-box ' + (ok ? 'result-ok' : 'result-error')
+      el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+    }
+
+    async function apiFetch(url, options = {}) {
+      const r = await fetch(url, options)
+      const json = await r.json()
+      return { status: r.status, ok: r.ok, json }
+    }
+
+    // ── Drag & Drop ──────────────────────────────────────────────────────────
+
+    const dropZone = document.getElementById('dropZone')
+    let selectedFile = null
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      dropZone.classList.add('drag-over')
+    })
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'))
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault()
+      dropZone.classList.remove('drag-over')
+      const file = e.dataTransfer.files[0]
+      if (file) setFile(file)
+    })
+
+    function onFileSelected(input) {
+      if (input.files[0]) setFile(input.files[0])
+    }
+
+    function setFile(file) {
+      selectedFile = file
+      const kb = (file.size / 1024).toFixed(1)
+      document.getElementById('dropLabel').textContent = `✅ ${file.name} (${kb} KB)`
+      document.getElementById('uploadBtn').disabled = false
+    }
+
+    // ── Operaciones MinIO ────────────────────────────────────────────────────
+
+    async function listarBuckets() {
+      try {
+        const { status, ok, json } = await apiFetch('/minio/buckets')
+        if (!ok) return mostrar('resultListBuckets', json, false)
+
+        if (json.length === 0) {
+          mostrar('resultListBuckets', 'No hay buckets todavía. Crea uno primero.', false)
+          return
+        }
+        // Renderizar tabla de buckets en el result-box
+        const el = document.getElementById('resultListBuckets')
+        el.className = 'result-box'
+        el.innerHTML = json.map(b =>
+          `<span style="color:#f6c90e">📦 ${b.name}</span>  <span style="color:#475569">${new Date(b.creationDate).toLocaleString('es-ES')}</span>`
+        ).join('\n')
+      } catch (e) {
+        mostrar('resultListBuckets', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    async function crearBucket() {
+      const name = document.getElementById('newBucketName').value.trim()
+      if (!name) return mostrar('resultCreateBucket', 'Escribe un nombre de bucket.', false)
+
+      try {
+        const { status, ok, json } = await apiFetch(`/minio/buckets/${name}`, { method: 'POST' })
+        mostrar('resultCreateBucket', `HTTP ${status}\n` + JSON.stringify(json, null, 2), ok)
+        if (ok) listarBuckets()
+      } catch (e) {
+        mostrar('resultCreateBucket', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    async function listarFicheros() {
+      const bucket = document.getElementById('listBucket').value.trim()
+      if (!bucket) return mostrar('resultListFiles', 'Escribe el nombre del bucket.', false)
+
+      try {
+        const { status, ok, json } = await apiFetch(`/minio/buckets/${bucket}/files`)
+        if (!ok) return mostrar('resultListFiles', json, false)
+
+        if (json.length === 0) {
+          mostrar('resultListFiles', `El bucket "${bucket}" está vacío.`, false)
+          return
+        }
+
+        const el = document.getElementById('resultListFiles')
+        el.className = 'result-box'
+        const header = `<span style="color:#475569">  ${'NOMBRE'.padEnd(30)} TAMAÑO      MODIFICADO</span>`
+        const rows = json.map(f => {
+          const kb   = (f.size / 1024).toFixed(1).padStart(7)
+          const date = new Date(f.lastModified).toLocaleString('es-ES')
+          return `<span style="color:#a5f3fc">📄 ${f.name.padEnd(30)}</span><span style="color:#64748b"> ${kb} KB   ${date}</span>`
+        })
+        el.innerHTML = [header, ...rows].join('\n')
+      } catch (e) {
+        mostrar('resultListFiles', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    async function subirFichero() {
+      const bucket = document.getElementById('uploadBucket').value.trim()
+      if (!bucket)       return mostrar('resultUpload', 'Indica el bucket destino.', false)
+      if (!selectedFile) return mostrar('resultUpload', 'Selecciona un fichero primero.', false)
+
+      mostrar('resultUpload', '⏳ Subiendo…', true)
+
+      try {
+        const formData = new FormData()
+        formData.append('fichero', selectedFile)
+
+        const r    = await fetch(`/minio/buckets/${bucket}/upload`, { method: 'POST', body: formData })
+        const json = await r.json()
+
+        mostrar('resultUpload', `HTTP ${r.status}\n` + JSON.stringify(json, null, 2), r.ok)
+
+        if (r.ok) {
+          // Refrescar lista de ficheros si el bucket coincide con el de listado
+          const listBucket = document.getElementById('listBucket').value.trim()
+          if (listBucket === bucket) listarFicheros()
+        }
+      } catch (e) {
+        mostrar('resultUpload', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    async function obtenerUrl() {
+      const bucket   = document.getElementById('urlBucket').value.trim()
+      const filename = document.getElementById('urlFilename').value.trim()
+      const expira   = document.getElementById('urlExpira').value || 3600
+
+      if (!bucket || !filename) {
+        return mostrar('resultUrl', 'Rellena el bucket y el nombre del fichero.', false)
+      }
+
+      try {
+        const { status, ok, json } = await apiFetch(
+          `/minio/buckets/${bucket}/files/${filename}/url?expira=${expira}`
+        )
+
+        if (!ok) return mostrar('resultUrl', json, false)
+
+        document.getElementById('urlOutput').value = json.url
+        mostrar('resultUrl', `HTTP ${status}\n` + JSON.stringify(json, null, 2), true)
+      } catch (e) {
+        mostrar('resultUrl', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    function descargarFichero() {
+      const bucket   = document.getElementById('dlBucket').value.trim()
+      const filename = document.getElementById('dlFilename').value.trim()
+      if (!bucket || !filename) {
+        return mostrar('resultDownload', 'Rellena el bucket y el nombre del fichero.', false)
+      }
+      // Abrir la URL en una nueva pestaña fuerza la descarga del fichero
+      const url = `/minio/buckets/${bucket}/files/${filename}`
+      mostrar('resultDownload', `⬇️ Descargando desde:\n${url}\n\nEl fichero se descargará automáticamente.`, true)
+      window.open(url, '_blank')
+    }
+
+    async function eliminarV1() {
+      const bucket   = document.getElementById('delBucket').value.trim()
+      const filename = document.getElementById('delFilename').value.trim()
+      if (!bucket || !filename) {
+        return mostrar('resultDelete', 'Rellena el bucket y el nombre del fichero.', false)
+      }
+      mostrar('resultDelete', '⏳ Eliminando con .then/.catch…', true)
+
+      fetch(`/minio/buckets/${bucket}/files/${filename}/v1`, { method: 'DELETE' })
+        .then(r => r.json().then(json => ({ status: r.status, ok: r.ok, json })))
+        .then(({ status, ok, json }) => {
+          mostrar('resultDelete',
+            `[Patrón .then/.catch]\nHTTP ${status}\n` + JSON.stringify(json, null, 2), ok)
+          if (ok) listarFicheros()
+        })
+        .catch(e => mostrar('resultDelete', 'Error de red: ' + e.message, false))
+    }
+
+    async function eliminarV2() {
+      const bucket   = document.getElementById('delBucket').value.trim()
+      const filename = document.getElementById('delFilename').value.trim()
+      if (!bucket || !filename) {
+        return mostrar('resultDelete', 'Rellena el bucket y el nombre del fichero.', false)
+      }
+      mostrar('resultDelete', '⏳ Eliminando con async/await…', true)
+      try {
+        const { status, ok, json } = await apiFetch(
+          `/minio/buckets/${bucket}/files/${filename}`, { method: 'DELETE' }
+        )
+        mostrar('resultDelete',
+          `[Patrón async/await]\nHTTP ${status}\n` + JSON.stringify(json, null, 2), ok)
+        if (ok) listarFicheros()
+      } catch (e) {
+        mostrar('resultDelete', 'Error de red: ' + e.message, false)
+      }
+    }
+
+    function copiarUrl() {
+      const url = document.getElementById('urlOutput').value
+      if (!url) return
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('[onclick="copiarUrl()"]')
+        const original = btn.textContent
+        btn.textContent = '✅ Copiado'
+        setTimeout(() => btn.textContent = original, 2000)
+      })
+    }
+
+    function abrirUrl() {
+      const url = document.getElementById('urlOutput').value
+      if (url) window.open(url, '_blank')
+    }
+  </script>
+</body>
+</html>

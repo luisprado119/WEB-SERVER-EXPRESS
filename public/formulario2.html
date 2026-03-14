@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulario2 - Subida múltiple</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    label { display: block; margin-top: 1rem; }
+    button { margin-top: 1rem; padding: .5rem 1rem; }
+    pre { background: #f5f5f5; border: 1px solid #ddd; padding: 1rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Formulario de subida de un solo fichero</h1>
+  <p>Envía un único fichero en el campo <code>fichero1</code>.</p>
+
+  <form id="singleForm" method="POST" action="/postMultipart" enctype="multipart/form-data">
+    <label>Fichero 1:
+      <input type="file" name="fichero1" required>
+    </label>
+    <button type="submit">Subir fichero</button>
+  </form>
+
+  <p style="margin-top: 2rem;">Opcional: subir varios ficheros con el mismo campo.</p>
+  <form id="multiForm" method="POST" action="/postMultipartMultiple" enctype="multipart/form-data">
+    <label>Ficheros (múltiple):
+      <input type="file" name="ficheros" multiple>
+    </label>
+    <button type="submit">Subir ficheros múltiples</button>
+  </form>
+
+  <pre id="multiResult">Resultado aquí...</pre>
+
+  <script>
+    const result = document.getElementById('multiResult')
+
+    document.getElementById('singleForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const data = new FormData(e.target)
+      const r = await fetch('/postMultipart', { method: 'POST', body: data })
+      const json = await r.json()
+      result.textContent = `POST /postMultipart HTTP ${r.status}\n` + JSON.stringify(json, null, 2)
+    })
+
+    document.getElementById('multiForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const data = new FormData(e.target)
+      const r = await fetch('/postMultipartMultiple', { method: 'POST', body: data })
+      const json = await r.json()
+      result.textContent = `POST /postMultipartMultiple HTTP ${r.status}\n` + JSON.stringify(json, null, 2)
+    })
+  </script>
+</body>
+</html>

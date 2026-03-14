@@ -1,0 +1,19 @@
+{
+  "name": "curso-express-primero",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-fileupload": "^1.5.2",
+    "minio": "^8.0.7",
+    "morgan": "^1.10.1",
+    "pg": "^8.20.0",
+    "web3": "^4.16.0"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  }
+}

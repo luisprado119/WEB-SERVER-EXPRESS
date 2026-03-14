@@ -1,0 +1,34 @@
+# Dependencias de Node.js
+node_modules/
+
+# Logs generados por Morgan
+uploads/access.log
+uploads/logsBuenos.txt
+uploads/logsErrores.txt
+
+# Todo el contenido de uploads/ (logs y ficheros subidos durante las pruebas)
+# La carpeta se mantiene vacía con .gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Datos locales de MinIO (no forman parte del código)
+minio-data/
+
+# Ejecutable MinIO (binario, descárgalo tú mismo)
+minio.exe
+
+# Variables de entorno (contienen credenciales sensibles)
+.env
+.env.local
+.env.production
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/settings.json
+.idea/
+*.swp
+*.swo

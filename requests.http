@@ -1,0 +1,901 @@
+###############################################################################
+# PRÁCTICA COMPLETA: Express.js - Tipos de body, query params y parámetros de ruta
+###############################################################################
+# 
+# Este archivo contiene 40+ ejemplos de peticiones HTTP para aprender los conceptos
+# fundamentales de Express y cómo maneja distintos tipos de datos.
+#
+# REQUISITOS:
+# 1. Instala la extensión REST Client en VS Code
+# 2. Asegúrate de que el servidor está ejecutándose: node app.js
+# 3. Abre este archivo (requests.http) en VS Code
+# 4. Haz clic en "Send Request" sobre cualquier petición ejemplo
+# 5. Observa la respuesta en el panel lateral
+#
+# OBJETIVO DE APRENDIZAJE:
+# Entender los tres tipos de datos que puede recibir un servidor Express:
+#   1. req.params  -> variables en la URL (/usuarios/:id)
+#   2. req.query   -> parámetros de consulta (?foo=bar&baz=qux)
+#   3. req.body    -> datos en el cuerpo (JSON, formularios)
+#
+###############################################################################
+
+# ============================================================================
+# SECCIÓN 1: Rutas GET - Inicio básico
+# ============================================================================
+# Los GET son peticiones de LECTURA. No envían cuerpo (body) de ningún tipo.
+# Se usan para obtener información del servidor sin modificarla.
+# Son SEGUROS e IDEMPOTENTES (se pueden repetir sin efectos secundarios).
+#
+# OBSERVA: No hay body en estas peticiones, solo la URL y headers.
+
+# Petición 1.a: GET /welcome
+# Metodo:     GET (lectura, sin body)
+# Resultado:  Texto plano "hola"
+GET http://localhost:3333/welcome
+Accept: text/plain
+
+###
+
+# Petición 1.b: GET /hola
+# Metodo:     GET
+# Resultado:  Texto plano "Hola a Todos"
+GET http://localhost:3333/hola
+Accept: text/plain
+
+###
+
+# ============================================================================
+# SECCIÓN 2: Códigos de estado HTTP (Status Codes)
+# ============================================================================
+# El servidor responde con un CÓDIGO que indica el resultado de la petición.
+# Códigos principales:
+#   2xx (200, 201, 204) -> ÉXITO
+#   3xx (301, 302)      -> REDIRECCIÓN
+#   4xx (400, 404, 401) -> ERROR DEL CLIENTE
+#   5xx (500, 503)      -> ERROR DEL SERVIDOR
+#
+# Aquí simulamos diferentes códigos de error para comprenderlos.
+
+# Petición 2.a: GET /error400
+# Status:  400 Bad Request
+# Sig.:    El cliente envió una solicitud inválida o malformada
+GET http://localhost:3333/error400
+
+###
+
+# Petición 2.b: GET /error500
+# Status:  500 Internal Server Error
+# Sig.:    Ocurrió un error inesperado en el servidor
+GET http://localhost:3333/error500
+
+###
+
+# Petición 2.c: GET /error404
+# Status:  404 Not Found
+# Sig.:    El recurso solicitado no existe en el servidor
+GET http://localhost:3333/error404
+
+###
+
+# ============================================================================
+# SECCIÓN 3: POST básico con body JSON
+# ============================================================================
+# POST se usa para ENVIAR datos al servidor (crear, modificar, procesar).
+# El cuerpo (body) contiene los datos a procesar.
+# 
+# Header Content-Type: application/json
+#   Indica al servidor que el body es un JSON válido.
+#   Middleware requerido: app.use(express.json())
+#
+# Observa: Hay un bloque de JSON después de los headers (el BODY).
+# Resultado esperado: Status 201, JSON con { message, data }
+
+POST http://localhost:3333/data
+Content-Type: application/json
+
+{
+  "name": "Juan",
+  "age": 30
+}
+
+###
+
+# ============================================================================
+# SECCIÓN 4: POST con body en formulario (x-www-form-urlencoded)
+# ============================================================================
+# Este es el formato TRADICIONAL de los formularios HTML.
+# Los datos se envían como pares key=value separados por &
+#
+# Header Content-Type: application/x-www-form-urlencoded
+# Middleware requerido: app.use(express.urlencoded({ extended: true }))
+#
+# Formato: campo1=valor1&campo2=valor2&fecha=2024-06-01
+# Resultado esperado: JSON con los datos parseados en req.body
+
+POST http://localhost:3333/echoPost
+Content-Type: application/x-www-form-urlencoded
+
+campo1=valor1&fecha=2024-06-01
+
+###
+
+# ============================================================================
+# SECCIÓN 5: POST con JSON complejo (arrays y objetos anidados)
+# ============================================================================
+# El servidor Express parsea automáticamente estructuras JSON complejas.
+# Aquí incluimos arrays y objetos anidados para demostrar su capacidad.
+#
+# El servidor:
+#   1. Parsea el JSON automáticamente con express.json()
+#   2. Lo coloca en req.body
+#   3. Lo devuelve íntegro para verificación
+#
+# Observa que la estructura compleja se mantiene intacta.
+
+POST http://localhost:3333/echoPostJson
+Content-Type: application/json
+
+{
+  "A": "12",
+  "B": ["34", "25", "45"],
+  "person": {
+    "name": "bobby",
+    "age": 3
+  }
+}
+
+###
+
+# ============================================================================
+# SECCIÓN 6: Variantes de body - mismo endpoint, distinto Content-Type
+# ============================================================================
+# La ruta /echoPost es FLEXIBLE y puede recibir varios formatos.
+# Este ejemplo envía datos como x-www-form-urlencoded.
+#
+# Nota: El middleware express.urlencoded() detecta el Content-Type
+#       y parsea automáticamente los datos en req.body.
+
+POST http://localhost:3333/echoPost
+Content-Type: application/x-www-form-urlencoded
+
+A=12&B=34&B=25&B=45&person[name]=bobby&person[age]=3
+
+###
+
+# ============================================================================
+# SECCIÓN 7: Query parameters combinados con POST body
+# ============================================================================
+# QUERY PARAMS: Valores que aparecen DESPUÉS del ? en la URL.
+# Ejemplo: ?a=2&b=3&c=4 se captura en req.query
+#
+# Se puede COMBINAR:
+#   - Query params (?a=2&b=3) EN LA URL
+#   + Body (JSON o formulario) EN EL CUERPO
+#
+# El servidor accede a AMBOS:
+#   - req.query -> { a: "2", b: "3", c: "4", ... }
+#   - req.body  -> datos del cuerpo
+#
+# En este ejemplo:
+#   Query: ?a=2&b=3&c=4&c=5&c=6
+#   Body:  formulario con A=12&B=34&...
+
+POST http://localhost:3333/echoPost?a=2&b=3&c=4&c=5&c=6
+Content-Type: application/x-www-form-urlencoded
+
+A=12&B=34&B=25&B=45&person[name]=bobby&person[age]=3
+
+###
+
+# ============================================================================
+# SECCIÓN 8: Query params con JSON body
+# ============================================================================
+# Mismo concepto que Sección 7: query string + body JSON.
+# La ruta /echoPostJson devuelve ambos: req.body Y req.query
+#
+# Verifica en la RESPUESTA:
+#   { message, data: { ... }, query: { foo: "bar", ... } }
+#
+# El servidor captura:
+#   - Body JSON: { example: "..." }
+#   - Query params: ?foo=bar&foo=baz
+
+POST http://localhost:3333/echoPostJson?foo=bar&foo=baz
+Content-Type: application/json
+
+{
+  "example": "check query parameters are echoed"
+}
+
+###
+
+# ============================================================================
+# SECCIÓN 9: PARÁMETROS DINÁMICOS DE RUTA (req.params)
+# ============================================================================
+#
+# CONCEPTOS CLAVE:
+#
+# Express permite definir rutas con VARIABLES usando :nombreVariable
+# Sintaxis: /ruta/:variable1/subruta/:variable2
+#
+# Ejemplo de ruta: /echoParamsPost/:cliente/facturas/:factura
+#
+# Si una petición llega a: /echoParamsPost/ACME/facturas/F2024001
+#   El servidor captura: req.params = { cliente: "ACME", factura: "F2024001" }
+#
+# RESUMEN: Una PETICIÓN Express puede tener TRES fuentes de datos:
+#   1. req.params  -> variables en LA RUTA (/usuarios/:id, /clientes/:cliente)
+#   2. req.query   -> parámetros de CONSULTA (?foo=bar&baz=qux)
+#   3. req.body    -> datos en EL CUERPO (JSON, formularios)
+#
+# La ruta /echoParamsPost/:cliente/facturas/:factura COMBINA LAS TRES
+# y devuelve un JSON con todos los datos para VERIFICACIÓN.
+
+# ---- EJEMPLO 1 ----
+# Parámetros dinámicos simples
+# URL: /echoParamsPost/ACME/facturas/F2024001
+# Captura:
+#   req.params = { cliente: "ACME", factura: "F2024001" }
+#   req.body = { monto: 1500.50, estado: "pendiente" }
+# Verifica que en la respuesta aparecen los tres datos: params, body, query
+POST http://localhost:3333/echoParamsPost/ACME/facturas/F2024001
+Content-Type: application/json
+
+{
+  "monto": 1500.50,
+  "estado": "pendiente",
+  "descripcion": "Factura profesional"
+}
+
+###
+
+# ---- EJEMPLO 2 ----
+# Mismo endpoint, OTROS valores dinámicos
+# Observa que solamente cambian los parámetros de ruta, pero la lógica es igual
+POST http://localhost:3333/echoParamsPost/TechCorp/facturas/F2024202
+Content-Type: application/json
+
+{
+  "monto": 3200.75,
+  "estado": "pagada",
+  "metodo": "tarjeta"
+}
+
+###
+
+# ---- EJEMPLO 3 ----
+# Parámetros de ruta + query string combinados
+# URL: /echoParamsPost/ClienteX/facturas/F202400999?incluir=detalles&idioma=es
+# Captura:
+#   req.params = { cliente: "ClienteX", factura: "F202400999" }
+#   req.query = { incluir: "detalles", idioma: "es" }
+#   req.body = { comentario, prioridad }
+# En la respuesta verás los TRES tipos de datos presentes.
+POST http://localhost:3333/echoParamsPost/ClienteX/facturas/F202400999?incluir=detalles&idioma=es
+Content-Type: application/json
+
+{
+  "comentario": "Factura duplicada en el sistema",
+  "prioridad": "alta",
+  "requiereRevision": true
+}
+
+###
+
+# ---- EJEMPLO 4 (MÁS EDUCATIVO) ----
+# COMBINACIÓN COMPLETA: params + query + body
+# 
+# URL: /echoParamsPost/MiEmpresa/facturas/INV2024100?formato=json&incluir=items&version=2
+#
+# Lo que se captura:
+#   Parámetros de RUTA:
+#     req.params.cliente = "MiEmpresa"
+#     req.params.factura = "INV2024100"
+#
+#   Parámetros de CONSULTA (query):
+#     req.query.formato = "json"
+#     req.query.incluir = "items"
+#     req.query.version = "2"
+#
+#   Datos del CUERPO (body):
+#     req.body.items = [ ... ]
+#     req.body.impuestos = 15.5
+#     req.body.notas = "Pago a 30 días"
+#
+# RESPUESTA (lo que devuelve el servidor):
+#   {
+#     message: "Datos completos de la petición",
+#     body: { items, impuestos, notas },
+#     query: { formato, incluir, version },
+#     params: { cliente, factura }
+#   }
+
+POST http://localhost:3333/echoParamsPost/MiEmpresa/facturas/INV2024100?formato=json&incluir=items&version=2
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "descripcion": "Producto A - Licencia perpetua",
+      "cantidad": 5,
+      "precio": 100,
+      "subtotal": 500
+    },
+    {
+      "descripcion": "Producto B - Soporte técnico",
+      "cantidad": 3,
+      "precio": 200,
+      "subtotal": 600
+    }
+  ],
+  "subtotal": 1100,
+  "impuestos": 15.5,
+  "total": 1115.5,
+  "notas": "Pago a 30 días",
+  "condiciones": "Factura válida por 30 días"
+}
+
+###
+
+###############################################################################
+# RESUMEN EDUCATIVO: LOS TRES TIPOS DE DATOS EN EXPRESS
+###############################################################################
+#
+# 1. req.params (Parámetros de RUTA)
+#    - Dónde: En la URL misma
+#    - Definición: /usuario/:id/pedidos/:pedidoId
+#    - Ejemplo: /usuario/123/pedidos/456
+#    - Resultado: req.params = { id: "123", pedidoId: "456" }
+#    - Uso: Identificar recursos específicos
+#
+# 2. req.query (Parámetros de CONSULTA)
+#    - Dónde: Después del ? en la URL
+#    - Formato: ?clave1=valor1&clave2=valor2
+#    - Ejemplo: /facturas?mes=enero&año=2024&estado=pagada
+#    - Resultado: req.query = { mes: "enero", año: "2024", estado: "pagada" }
+#    - Uso: Filtros, búsqueda, ordenar, paginar
+#
+# 3. req.body (Datos del CUERPO)
+#    - Dónde: En el cuerpo de la petición (POST, PUT, PATCH)
+#    - Formatos:
+#      * application/json          -> JSON ({ key: value })
+#      * application/x-www-form-urlencoded -> key1=valor1&key2=valor2
+#      * multipart/form-data       -> archivos + datos
+#    - Middleware requerido:
+#      * express.json()
+#      * express.urlencoded({ extended: true })
+#    - Uso: Enviar datos para crear/modificar recursos
+#
+###############################################################################
+#
+# MÉTODOS HTTP COMUNES
+# ============================================================================
+#   GET    -> Lectura (sin body)
+#   POST   -> Crear + procesar (con body)
+#   PUT    -> Reemplazar completo (con body)
+#   PATCH  -> Modificar parcialmente (con body)
+#   DELETE -> Eliminar (generalmente sin body)
+#
+###############################################################################
+#
+# CÓDIGOS DE ESTADO IMPORTANTES
+# ============================================================================
+#   200 OK                 -> La petición fue exitosa
+#   201 Created            -> Recurso creado correctamente
+#   204 No Content         -> Éxito, pero sin cuerpo en la respuesta
+#   400 Bad Request        -> Error del CLIENTE (datos mal formados)
+#   401 Unauthorized       -> Error de autenticación
+#   403 Forbidden          -> Acceso prohibido
+#   404 Not Found          -> Recurso no encontrado
+#   500 Internal Error     -> Error del SERVIDOR (excepciones)
+#   503 Service Unavailable -> Servidor no disponible
+#
+###############################################################################
+#
+# BUENAS PRÁCTICAS
+# ============================================================================
+#   1. Usa GET para lectura, POST para crear, PUT para actualizar, DELETE para borrar
+#   2. Valida SIEMPRE los datos en req.body antes de procesarlos
+#   3. Devuelve códigos de estado apropiados (201 para create, 400 para errores)
+#   4. Documenta tus rutas con comentarios claros
+#   5. Organiza middlewares ANTES de las rutas
+#   6. Maneja errores correctamente con try-catch
+#   7. Usa variables de ruta para IDs, query para filtros, body para datos complejos
+#
+###############################################################################
+
+###
+GET http://localhost:3333
+Accept: text/plain    
+
+### Petición a un recurso estático servido por express.static()   
+http://localhost:3333/formulario.html
+
+###
+http://localhost:3333/formulario2.html
+
+###
+# Formulario MinIO – Object Storage (subida de ficheros a MinIO con drag & drop)
+http://localhost:3333/formularioMinio.html
+
+###
+
+# ============================================================================
+# SECCIÓN 10: BASE DE DATOS – Consultas a PostgreSQL
+# ============================================================================
+#
+# Express puede conectarse a bases de datos usando drivers de Node.js.
+# Para PostgreSQL se usa el módulo 'pg' (node-postgres).
+#
+# CONCEPTOS CLAVE:
+#
+# Pool de conexiones:
+#   En lugar de abrir/cerrar una conexión por cada consulta, Pool mantiene un
+#   grupo de conexiones reutilizables. Esto mejora el rendimiento bajo carga.
+#   Se crea UNA SOLA VEZ al iniciar el servidor y se reutiliza en todas las rutas.
+#
+# pool.query(sql):
+#   Ejecuta una consulta SQL y devuelve una Promise.
+#   El resultado tiene:
+#     result.rows      -> array de objetos con las filas devueltas
+#     result.rowCount  -> número de filas afectadas
+#
+# Patrón async/await + try/catch:
+#   El await espera el resultado de la consulta sin bloquear otras peticiones.
+#   El catch captura errores de conexión o SQL y devuelve status 500.
+#
+# CONSULTAS CON PARÁMETROS (evitan SQL Injection):
+#   pool.query('SELECT * FROM users WHERE id = $1', [id])
+#   Los valores se pasan en un array; pg los escapa de forma segura.
+#   NUNCA concatenar valores del usuario directamente en el SQL.
+
+# ---- EJEMPLO 10.a ----
+# GET /bdd/test  ->  Test de conexión a la base de datos
+#
+# Ejecuta: SELECT now() AS fecha
+# Verifica que PostgreSQL responde y devuelve la fecha/hora actual del servidor.
+# Si hay error de conexión recibirás: { "error": "Error de conexión...", "details": "..." }
+# Si la conexión es correcta: { "fecha": "2026-03-13T12:34:56.789Z" }
+#
+# Úsalo siempre que quieras comprobar si la BDD está activa y accesible.
+GET http://localhost:3333/bdd/test
+
+###
+
+# ---- EJEMPLO 10.b ----
+# GET /bdd/customers  ->  Listar todos los registros de la tabla 'customers'
+#
+# Ejecuta: SELECT * FROM customers
+# Devuelve un array JSON con TODOS los registros de la tabla.
+# Respuesta esperada: [ { customer_id, company_name, contact_name, ... }, ... ]
+# Si la tabla está vacía: []
+# Si la tabla no existe recibirás un error 500 con el mensaje de PostgreSQL.
+#
+# NOTA: En una API real añadirías paginación:
+#   SELECT * FROM customers LIMIT 20 OFFSET 0
+GET http://localhost:3333/bdd/customers
+
+###
+
+# ---- EJEMPLO 10.c ----
+# GET /bdd/orders/:cliente  ->  Todos los pedidos de un cliente concreto
+#
+# Ejecuta: SELECT * FROM orders WHERE customer_id = $1
+# El valor de :cliente en la URL se pasa como parámetro $1 al SQL.
+#
+# CLAVE: parámetros SQL con $1, $2...
+#   pool.query('SELECT * FROM orders WHERE customer_id = $1', [req.params.cliente])
+#   PostgreSQL sustituye $1 por el valor de forma SEGURA (evita SQL Injection).
+#   NUNCA escribir: `WHERE customer_id = '${req.params.cliente}'`
+#
+# Prueba con distintos customer_id: ALFKI, ANATR, ANTON, AROUT, BERGS...
+# Respuesta esperada: [ { order_id, customer_id, order_date, ... }, ... ]
+GET http://localhost:3333/bdd/orders/ALFKI
+
+###
+
+# Mismo endpoint, otro cliente
+GET http://localhost:3333/bdd/orders/ANTON
+
+###
+
+# ---- EJEMPLO 10.d ----
+# GET /bdd/orders/:cliente/:id  ->  Un pedido específico de un cliente
+#
+# Ejecuta: SELECT * FROM orders WHERE customer_id = $1 AND order_id = $2
+# Usa DOS parámetros de ruta (:cliente y :id) para identificar un único registro.
+# Ejemplo: ALFKI tiene los pedidos 10643, 10692, 10702, 10835, 10952, 11011
+#
+# Respuesta esperada: { order_id, customer_id, order_date, shipped_date, ... }
+# Si no existe el pedido: { "error": "Pedido no encontrado" }  con status 404
+#
+# Prueba: cambia el order_id o el cliente para ver el comportamiento
+GET http://localhost:3333/bdd/orders/ALFKI/10643
+
+###
+
+# Pedido de otro cliente
+GET http://localhost:3333/bdd/orders/ANTON/10365
+
+###
+
+# Pedido inexistente -> devuelve 404 { "error": "Pedido no encontrado" }
+# NOTA: order_id es de tipo smallint en PostgreSQL (rango: -32768 a 32767)
+#       Usar un número dentro de ese rango pero que no exista en la tabla.
+GET http://localhost:3333/bdd/orders/ALFKI/9999
+
+###
+
+###############################################################################
+# RESUMEN: BASE DE DATOS CON NODE.JS Y POSTGRESQL
+###############################################################################
+#
+# CONFIGURACIÓN DEL POOL (en app.js):
+#   const { Pool } = require('pg')
+#   const pool = new Pool({
+#     host:     'localhost',
+#     port:     5432,         // Puerto estándar de PostgreSQL
+#     user:     'postgres',
+#     password: 'tu_password',
+#     database: 'nombre_db'  // Opcional
+#   })
+#
+# PATRÓN DE RUTA CON BASE DE DATOS:
+#   app.get('/recurso', async (req, res) => {
+#     try {
+#       const resultado = await pool.query('SELECT * FROM tabla')
+#       res.json(resultado.rows)
+#     } catch (error) {
+#       res.status(500).json({ error: error.message })
+#     }
+#   })
+#
+# CONSULTAS PARAMETRIZADAS (OBLIGATORIO para datos del usuario):
+#   const { rows } = await pool.query(
+#     'SELECT * FROM customers WHERE id = $1 AND activo = $2',
+#     [req.params.id, true]
+#   )
+#
+# BUENAS PRÁCTICAS:
+#   1. Usa SIEMPRE parámetros ($1, $2...) para valores dinámicos
+#   2. Nunca concatenes req.params o req.body directamente en el SQL
+#   3. Maneja SIEMPRE los errores con try/catch
+#   4. Devuelve result.rows (el array), no el objeto QueryResult completo
+#   5. En producción usa variables de entorno para las credenciales
+#
+###############################################################################
+
+###
+
+# ============================================================================
+# SECCIÓN 11: BLOCKCHAIN – Consultas a Ethereum con Web3.js
+# ============================================================================
+#
+# Web3.js es la librería estándar para interactuar con la blockchain de Ethereum.
+# Permite LEER datos sin coste (sin gas) a través de un proveedor (Infura, Alchemy...).
+#
+# CONCEPTOS CLAVE:
+#
+# Wei y Ether:
+#   La unidad mínima de Ethereum es el Wei.
+#   1 Ether = 10^18 Wei = 1,000,000,000,000,000,000 Wei
+#   Web3.utils.fromWei(wei, 'ether') convierte a Ether (más legible)
+#
+# Nonce (transaction count):
+#   Número de transacciones que ha ENVIADO un wallet.
+#   Nonce = 0  →  wallet nuevo, nunca ha enviado transacciones
+#   Nonce > 0  →  wallet activo, con historial de envíos
+#
+# Checksummed Address (EIP-55):
+#   Ethereum acepta direcciones en minúsculas, pero el estándar EIP-55
+#   usa mayúsculas específicas para detectar errores tipográficos.
+#   Web3.utils.toChecksumAddress() convierte cualquier dirección al formato correcto.
+#
+# Promise.all():
+#   Para hacer varias llamadas a la blockchain en PARALELO (más eficiente que esperar
+#   cada una de forma secuencial), usamos Promise.all([p1, p2, p3]).
+
+
+# ---- EJEMPLO 11.a ----
+# GET /web3/balance/:address  ->  Balance de un wallet en Wei y en ETH
+#
+# Consulta el saldo de la dirección indicada en la URL.
+# Esta dirección es tu primer wallet creado en la práctica.
+#
+# Respuesta esperada (wallet nuevo sin fondos):
+#   {
+#     "address": "0xCaB113E18897a870E8489DA9b8EA37fce653dE2D",
+#     "balanceWei": "0",
+#     "balanceEth": "0"
+#   }
+GET http://localhost:3333/web3/balance/0xCaB113E18897a870E8489DA9b8EA37fce653dE2D
+
+###
+
+# Puedes consultar cualquier otra dirección pública de Ethereum.
+# Por ejemplo, la dirección de Vitalik Buterin (creador de Ethereum):
+GET http://localhost:3333/web3/balance/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
+###
+
+# ---- EJEMPLO 11.b ----
+# GET /web3/wallet/:address  ->  Info completa del wallet
+#
+# Hace tres consultas en PARALELO con Promise.all():
+#   1. getBalance()           -> saldo en Wei y ETH
+#   2. getTransactionCount()  -> número de transacciones enviadas (nonce)
+#   3. getBlockNumber()       -> último bloque de la red (confirma conectividad)
+#
+# Respuesta esperada:
+#   {
+#     "address":          "0xCaB113E18897a870E8489DA9b8EA37fce653dE2D",
+#     "checksumAddress":  "0xCaB113E18897a870E8489DA9b8EA37fce653dE2D",
+#     "balanceWei":       "0",
+#     "balanceEth":       "0",
+#     "transactionCount": "0",   <- nonce = 0, wallet nuevo
+#     "latestBlock":      "...", <- número del bloque actual de Mainnet
+#     "network":          "mainnet"
+#   }
+GET http://localhost:3333/web3/wallet/0xCaB113E18897a870E8489DA9b8EA37fce653dE2D
+
+###
+
+# Info completa de Vitalik Buterin (wallet con mucha actividad)
+GET http://localhost:3333/web3/wallet/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+
+###
+
+###
+
+# ---- EJEMPLO 11.c ----
+# GET /web3/eth/getblock/:numero  ->  Datos completos de un bloque de Ethereum
+#
+# Devuelve toda la información del bloque cuyo número se indica en la URL.
+# Cada bloque es un "eslabón" de la cadena: contiene transacciones, hash del bloque
+# anterior (parentHash), timestamp, minero/validador, y metadatos de gas.
+#
+# Campos principales de la respuesta:
+#   number        -> índice del bloque en la cadena
+#   hash          -> identificador único del bloque (SHA-3)
+#   parentHash    -> hash del bloque anterior (forma la "cadena")
+#   timestamp     -> cuándo fue minado (segundos Unix)
+#   miner         -> dirección del validador que creó el bloque
+#   transactions  -> array de hashes de las transacciones incluidas
+#   gasUsed       -> gas consumido por todas las transacciones del bloque
+#   gasLimit      -> gas máximo permitido
+
+# Bloque génesis (el primero de la historia de Ethereum, 30 Jul 2015)
+GET http://localhost:3333/web3/eth/getblock/1
+
+###
+
+# El Merge: bloque histórico donde Ethereum pasó de PoW a PoS (15 Sep 2022)
+GET http://localhost:3333/web3/eth/getblock/15537394
+
+###
+
+# Un bloque reciente (cámbialo por cualquier número)
+GET http://localhost:3333/web3/eth/getblock/24656825
+
+###
+
+# Bloque inexistente -> devuelve 404
+GET http://localhost:3333/web3/eth/getblock/999999999
+
+###
+
+###############################################################################
+# RESUMEN: BLOCKCHAIN CON NODE.JS Y WEB3.JS
+###############################################################################
+#
+# CONFIGURACIÓN DEL PROVEEDOR (en app.js):
+#   const { Web3 } = require('web3')                   // Web3 v4: desestructuración
+#   const web3Provider = new Web3('https://mainnet.infura.io/v3/TU_KEY')
+#
+# LECTURAS (gratuitas, sin gas):
+#   const balance = await web3Provider.eth.getBalance(address)
+#   const nonce   = await web3Provider.eth.getTransactionCount(address)
+#   const block   = await web3Provider.eth.getBlockNumber()
+#
+# CONVERSIÓN DE UNIDADES:
+#   Wei → Ether:  Web3.utils.fromWei(wei, 'ether')
+#   Ether → Wei:  Web3.utils.toWei('1.5', 'ether')
+#
+# CONSULTAS EN PARALELO (más eficiente):
+#   const [balance, nonce] = await Promise.all([
+#     web3Provider.eth.getBalance(address),
+#     web3Provider.eth.getTransactionCount(address)
+#   ])
+#
+# BUENAS PRÁCTICAS:
+#   1. Las lecturas (getBalance, etc.) son GRATUITAS, úsalas libremente
+#   2. Nunca expongas tu clave privada en el código (solo en .env)
+#   3. Valida las direcciones con Web3.utils.isAddress(addr) antes de consultarlas
+#   4. Usa toChecksumAddress() para normalizar direcciones recibidas del usuario
+#   5. En producción usa variables de entorno para la API KEY de Infura/Alchemy
+#
+###############################################################################
+
+###
+
+# ============================================================================
+# SECCIÓN 13: OBJECT STORAGE – MinIO (compatible con AWS S3)
+# ============================================================================
+#
+# MinIO es un servidor de almacenamiento de objetos compatible con la API de AWS S3.
+# Permite guardar y servir ficheros (imágenes, PDFs, vídeos, backups...) de forma escalable.
+#
+# PARA ARRANCAR EL SERVIDOR MINIO (ejecutar en una terminal PowerShell):
+#   $env:MINIO_ROOT_USER="minioadmin"
+#   $env:MINIO_ROOT_PASSWORD="minioadmin"
+#   .\minio.exe server C:\minio-data --console-address :9001
+#
+#   API S3:   http://localhost:9000
+#   Consola:  http://localhost:9001  <- interfaz web para gestionar buckets visualmente
+#
+# CONCEPTOS:
+#   Bucket  -> contenedor principal (como una carpeta raíz). Nombre en minúsculas.
+#   Object  -> cualquier fichero guardado en un bucket.
+#   Key     -> nombre del objeto (puede contener "/" para simular subcarpetas).
+#
+# URL FIRMADA (presigned URL):
+#   URL temporal y segura para descargar un fichero directamente desde MinIO.
+#   Incluye una firma criptográfica con fecha de expiración.
+#   Útil para compartir ficheros privados sin exponerlos permanentemente.
+
+
+# ---- EJEMPLO 13.a ----
+# GET /minio/buckets  ->  Listar todos los buckets existentes
+# Respuesta esperada: [] (si no hay ninguno) o [ { name, creationDate }, ... ]
+GET http://localhost:3333/minio/buckets
+
+###
+
+# ---- EJEMPLO 13.b ----
+# POST /minio/buckets/:bucket  ->  Crear un nuevo bucket
+# El nombre del bucket debe estar en minúsculas y sin espacios.
+# Si ya existe devuelve 409. Si se crea correctamente devuelve 201.
+POST http://localhost:3333/minio/buckets/mis-practicas
+
+###
+
+# Crear otro bucket para imágenes
+POST http://localhost:3333/minio/buckets/imagenes-curso
+
+###
+
+# Intentar crear un bucket que ya existe -> devuelve 409
+POST http://localhost:3333/minio/buckets/mis-practicas
+
+###
+
+# ---- EJEMPLO 13.c ----
+# GET /minio/buckets/:bucket/files  ->  Listar ficheros de un bucket
+# Respuesta esperada: [] (vacío) o [ { name, size, lastModified, etag }, ... ]
+# etag = hash MD5 del contenido, sirve para detectar cambios en el fichero.
+GET http://localhost:3333/minio/buckets/mis-practicas/files
+
+###
+
+# ---- EJEMPLO 13.d ----
+# POST /minio/buckets/:bucket/upload  ->  Subir un fichero al bucket
+# El fichero debe enviarse en el campo multipart llamado "fichero".
+# Prueba desde el formulario en http://localhost:3333/formulario2.html
+# o desde el REST Client con el campo file:
+POST http://localhost:3333/minio/buckets/mis-practicas/upload
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="fichero"; filename="test.txt"
+Content-Type: text/plain
+
+Contenido de prueba para MinIO - práctica Object Storage
+------FormBoundary--
+
+###
+
+# ---- EJEMPLO 13.e ----
+# GET /minio/buckets/:bucket/files/:filename/url  ->  URL firmada de descarga
+# Genera una URL temporal para descargar el fichero directamente desde MinIO (sin pasar por Express).
+# ?expira=N  ->  duración de la URL en segundos (por defecto 3600 = 1 hora)
+#
+# La URL resultante se puede abrir en cualquier navegador o cliente HTTP.
+# Después de que expire, el acceso al fichero será denegado.
+GET http://localhost:3333/minio/buckets/mis-practicas/files/test.txt/url
+
+###
+
+# URL con expiración personalizada: 300 segundos (5 minutos)
+GET http://localhost:3333/minio/buckets/mis-practicas/files/test.txt/url?expira=300
+
+###
+
+###############################################################################
+# RESUMEN: OBJECT STORAGE CON MINIO Y NODE.JS
+###############################################################################
+#
+# CONFIGURACIÓN DEL CLIENTE (en app.js):
+#   const Minio = require('minio')
+#   const minioClient = new Minio.Client({
+#     endPoint: 'localhost', port: 9000,
+#     useSSL: false,
+#     accessKey: 'minioadmin', secretKey: 'minioadmin'
+#   })
+#
+# OPERACIONES PRINCIPALES:
+#   await minioClient.listBuckets()                        -> lista buckets
+#   await minioClient.makeBucket('nombre', 'region')       -> crea bucket
+#   await minioClient.bucketExists('nombre')               -> ¿existe?
+#   minioClient.listObjects('bucket', '', true)            -> stream de objetos
+#   await minioClient.putObject('bucket', 'key', buffer, size) -> sube fichero
+#   await minioClient.presignedGetObject('bucket', 'key', 3600) -> URL firmada
+#   await minioClient.removeObject('bucket', 'key')        -> borra objeto
+#
+# DIFERENCIA CLAVE CON fs (sistema de ficheros local):
+#   fs     -> guarda ficheros en el disco del servidor (no escala, no tiene URLs)
+#   MinIO  -> guarda en servicio de objetos, con URLs, políticas y replicación
+#             Compatible con AWS S3: cambiar endPoint por tu bucket en la nube
+#
+# ---- EJEMPLO 13.f ----
+# GET /minio/buckets/:bucket/files/:filename  ->  Recuperar / descargar un fichero
+#
+# Descarga el fichero a través de Express usando streaming (stream.pipe(res)).
+# El fichero pasa por el servidor sin cargarse en memoria completo.
+#
+# DIFERENCIA con presigned URL:
+#   Esta ruta:    cliente → Express → MinIO  (el servidor consume ancho de banda)
+#   Presigned:    cliente → MinIO directamente (Express solo genera la URL)
+#
+# Content-Disposition: attachment -> el navegador lo descarga en lugar de mostrarlo
+GET http://localhost:3333/minio/buckets/mis-practicas/files/package.json
+
+###
+
+# ---- EJEMPLO 13.g ----
+# DELETE /minio/buckets/:bucket/files/:filename/v1
+# Eliminar un fichero usando el patrón Promise chaining (.then / .catch)
+#
+# Patrón:
+#   minioClient.removeObject(bucket, filename)
+#     .then(() => res.json({ message: 'ok' }))
+#     .catch(err => res.status(500).json({ error: err.message }))
+#
+# Era el estilo estándar antes de async/await (ES2017).
+# Funcional pero puede volverse complejo con múltiples operaciones encadenadas.
+DELETE http://localhost:3333/minio/buckets/mis-practicas/files/package.json/v1
+
+###
+
+# ---- EJEMPLO 13.h ----
+# DELETE /minio/buckets/:bucket/files/:filename
+# Eliminar un fichero usando el patrón async / await
+#
+# Patrón:
+#   async (req, res) => {
+#     try {
+#       await minioClient.removeObject(bucket, filename)
+#       res.json({ message: 'ok' })
+#     } catch (error) {
+#       res.status(500).json({ error: error.message })
+#     }
+#   }
+#
+# VENTAJAS sobre .then/.catch:
+#   1. Código lineal de arriba a abajo (más fácil de leer)
+#   2. Un solo try/catch para todos los pasos
+#   3. Stack trace más claro al depurar
+#   4. Mejor manejo de variables entre operaciones (sin closures)
+DELETE http://localhost:3333/minio/buckets/mis-practicas/files/package.json
+
+###
+
+# BUENAS PRÁCTICAS:
+#   1. Un bucket por tipo de contenido (imágenes, documentos, backups...)
+#   2. Usa presignedGetObject para compartir ficheros privados temporalmente
+#   3. Nunca hagas público un bucket completo en producción
+#   4. En producción usa variables de entorno para accessKey y secretKey
+#   5. listObjects devuelve un STREAM (no una Promise), usa eventos .on()
+#   6. Prefiere async/await sobre .then/.catch para código más legible
+#
+###############################################################################

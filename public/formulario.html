@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulario de práctica Express</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    section { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; }
+    h1, h2 { margin-bottom: .5rem; }
+    label { display: block; margin-top: .5rem; }
+    input, textarea, select { width: 100%; padding: .4rem; margin-top:.25rem; }
+    button { margin-top: .75rem; padding:.5rem 1rem; }
+    pre { background: #f5f5f5; padding: .75rem; border: 1px solid #ddd; white-space: pre-wrap; word-wrap: break-word; }
+  </style>
+</head>
+<body>
+  <h1>Formulario de práctica Express</h1>
+
+  <section>
+    <h2>POST /data (JSON)</h2>
+    <p>Envía un JSON a tu ruta <strong>/data</strong>.</p>
+    <form id="formData">
+      <label>Nombre<input name="name" required></label>
+      <label>Edad<input name="age" type="number" required></label>
+      <button type="submit">Enviar a /data</button>
+    </form>
+    <pre id="resultData">Respuesta aquí...</pre>
+  </section>
+
+  <section>
+    <h2>POST /echoPost (x-www-form-urlencoded)</h2>
+    <p>Envía datos a <strong>/echoPost</strong> usando formulario clásico.</p>
+    <form id="formEchoPost" method="POST" action="/echoPost">
+      <label>Campo 1<input name="campo1"></label>
+      <label>Campo 2<input name="campo2"></label>
+      <button type="submit">Enviar a /echoPost</button>
+    </form>
+    <pre id="resultEchoPost">Envía el formulario para ver la respuesta en consola devtools.</pre>
+  </section>
+
+  <section>
+    <h2>POST /echoPostJson (JSON + query params)</h2>
+    <p>Envía JSON a <strong>/echoPostJson?foo=bar</strong> vía fetch.</p>
+    <form id="formEchoPostJson">
+      <label>Producto<input name="producto" required></label>
+      <label>Cantidad<input name="cantidad" type="number" required></label>
+      <button type="submit">Enviar a /echoPostJson</button>
+    </form>
+    <pre id="resultEchoPostJson">Respuesta aquí...</pre>
+  </section>
+
+  <section>
+    <h2>POST /uploadFicheros (multipart/form-data)</h2>
+    <p>Sube uno o varios ficheros a <strong>/uploadFicheros</strong>.</p>
+    <form id="formUpload" method="POST" action="/uploadFicheros" enctype="multipart/form-data">
+      <label>Texto extra<input name="comentario" value="prueba"></label>
+      <label>Fichero 1<input type="file" name="fichero1"></label>
+      <label>Fichero 2<input type="file" name="fichero2"></label>
+      <button type="submit">Subir ficheros</button>
+    </form>
+    <pre id="resultUpload">Respuesta aquí...</pre>
+  </section>
+
+  <script>
+    const resultData = document.getElementById('resultData');
+    const resultEchoPostJson = document.getElementById('resultEchoPostJson');
+
+    document.getElementById('formData').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const datos = {
+        name: e.target.name.value,
+        age: Number(e.target.age.value)
+      };
+      const resp = await fetch('/data', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(datos)
+      });
+      resultData.textContent = `HTTP ${resp.status}\n` + JSON.stringify(await resp.json(), null, 2);
+    });
+
+    document.getElementById('formEchoPostJson').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const datos = {
+        producto: e.target.producto.value,
+        cantidad: Number(e.target.cantidad.value)
+      };
+      const resp = await fetch('/echoPostJson?foo=bar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(datos)
+      });
+      resultEchoPostJson.textContent = `HTTP ${resp.status}\n` + JSON.stringify(await resp.json(), null, 2);
+    });
+
+    document.getElementById('formUpload').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const resp = await fetch('/uploadFicheros', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await resp.json();
+      document.getElementById('resultUpload').textContent = `HTTP ${resp.status}\n` + JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
+</html>
