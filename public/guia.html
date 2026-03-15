@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guía Web Server Express | CodeCrypto Academy</title>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:          #0d1117;
+      --bg2:         #161b22;
+      --bg3:         #0f3460;
+      --accent:      #00d4aa;
+      --accent2:     #00b4d8;
+      --accent3:     #7c3aed;
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --border:      #30363d;
+      --card-bg:     #161b22;
+      --success:     #3fb950;
+      --warning:     #d29922;
+      --danger:      #f85149;
+      --info:        #58a6ff;
+      --radius:      10px;
+      --shadow:      0 8px 32px rgba(0,0,0,0.4);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      background: #0d1117;
+      color: #79c0ff;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      position: relative;
+    }
+    pre code { background: none; padding: 0; font-size: inherit; color: #e6edf3; }
+    .kw   { color: #ff7b72; }
+    .fn   { color: #d2a8ff; }
+    .str  { color: #a5d6ff; }
+    .cmt  { color: #8b949e; font-style: italic; }
+    .num  { color: #79c0ff; }
+    .var  { color: #ffa657; }
+    .op   { color: #ff7b72; }
+
+    /* ═══════════════════════════════════════════════════
+       NAVBAR
+    ═══════════════════════════════════════════════════ */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-weight: 700; font-size: 1rem; color: var(--text);
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-badge {
+      background: var(--accent); color: #0d1117;
+      padding: 0.2rem 0.6rem; border-radius: 20px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
+    }
+    .nav-links {
+      display: flex; gap: 0.3rem; align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 0.82rem;
+      padding: 0.4rem 0.7rem; border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { background: var(--bg2); color: var(--text); text-decoration: none; }
+
+    /* ═══════════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════════ */
+    .hero {
+      background: linear-gradient(135deg, #0f3460 0%, #16213e 40%, #0d1117 100%);
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,212,170,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-label {
+      display: inline-block;
+      background: rgba(0,212,170,0.1);
+      border: 1px solid rgba(0,212,170,0.3);
+      color: var(--accent);
+      padding: 0.35rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      max-width: 620px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex; gap: 2rem; justify-content: center;
+      flex-wrap: wrap; margin-top: 2.5rem;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat .num { font-size: 2rem; font-weight: 800; color: var(--accent); display: block; }
+    .hero-stat .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ═══════════════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════════════ */
+    .main-layout {
+      display: flex;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      padding: 2rem 1rem;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .sidebar-title {
+      font-size: 0.7rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 2px;
+      padding: 0.5rem 0.75rem; margin-bottom: 0.3rem;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 1px;
+    }
+    .sidebar-item:hover { background: var(--bg2); color: var(--text); text-decoration: none; }
+    .sidebar-item.active { background: rgba(0,212,170,0.12); color: var(--accent); }
+    .sidebar-item .icon { font-size: 0.9rem; }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 0.75rem 0; }
+
+    /* CONTENT */
+    .content {
+      flex: 1;
+      padding: 2.5rem 2rem;
+      min-width: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SECTION CARDS
+    ═══════════════════════════════════════════════════ */
+    .section { margin-bottom: 4rem; }
+    .section-header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .section-icon.blue   { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); }
+    .section-icon.green  { background: rgba(63,185,80,0.15);  border: 1px solid rgba(63,185,80,0.3); }
+    .section-icon.purple { background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3); }
+    .section-icon.orange { background: rgba(255,165,0,0.15);  border: 1px solid rgba(255,165,0,0.3); }
+    .section-icon.teal   { background: rgba(0,212,170,0.15);  border: 1px solid rgba(0,212,170,0.3); }
+    .section-icon.red    { background: rgba(248,81,73,0.15);  border: 1px solid rgba(248,81,73,0.3); }
+    .section-icon.cyan   { background: rgba(0,180,216,0.15);  border: 1px solid rgba(0,180,216,0.3); }
+    .section-icon.gold   { background: rgba(210,153,34,0.15); border: 1px solid rgba(210,153,34,0.3); }
+
+    .section-title { font-size: 1.5rem; font-weight: 700; }
+    .section-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; }
+
+    /* Cards grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-label {
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-muted); margin-bottom: 0.4rem;
+    }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .card-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+    .card-tags { margin-top: 0.8rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .tag {
+      padding: 0.15rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.7rem; font-weight: 600;
+      background: rgba(0,212,170,0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0,212,170,0.2);
+    }
+    .tag.blue   { background: rgba(88,166,255,0.1); color: var(--info); border-color: rgba(88,166,255,0.2); }
+    .tag.purple { background: rgba(124,58,237,0.1); color: #a78bfa; border-color: rgba(124,58,237,0.2); }
+    .tag.orange { background: rgba(255,165,0,0.1);  color: #fb923c; border-color: rgba(255,165,0,0.2); }
+    .tag.red    { background: rgba(248,81,73,0.1);  color: var(--danger); border-color: rgba(248,81,73,0.2); }
+    .tag.gold   { background: rgba(210,153,34,0.1); color: var(--warning); border-color: rgba(210,153,34,0.2); }
+
+    /* Route list */
+    .route-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .route-item {
+      display: flex; align-items: stretch; gap: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-size: 0.82rem;
+      transition: border-color 0.15s;
+    }
+    .route-item:hover { border-color: var(--accent); }
+    .route-method {
+      padding: 0.65rem 0.9rem;
+      font-weight: 700; font-size: 0.72rem;
+      letter-spacing: 0.5px;
+      min-width: 68px; text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .method-get    { background: rgba(63,185,80,0.15);  color: var(--success); }
+    .method-post   { background: rgba(88,166,255,0.15); color: var(--info); }
+    .method-put    { background: rgba(255,165,0,0.15);  color: #fb923c; }
+    .method-patch  { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .method-delete { background: rgba(248,81,73,0.15);  color: var(--danger); }
+    .route-path {
+      padding: 0.65rem 1rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: #e6edf3;
+      flex: 1;
+      display: flex; align-items: center;
+      border-left: 1px solid var(--border);
+    }
+    .route-desc {
+      padding: 0.65rem 1rem;
+      color: var(--text-muted);
+      display: flex; align-items: center;
+      border-left: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+    .route-link {
+      padding: 0.65rem 0.8rem;
+      display: flex; align-items: center;
+      color: var(--accent);
+      border-left: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .route-link:hover { background: rgba(0,212,170,0.08); text-decoration: none; }
+
+    /* Try it panel */
+    .try-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .try-header {
+      padding: 0.75rem 1rem;
+      background: #0d1117;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.8rem; color: var(--text-muted);
+      font-weight: 600;
+    }
+    .try-body { padding: 1rem 1.2rem; }
+    .try-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .try-row:last-child { margin-bottom: 0; }
+    .try-input {
+      flex: 1; min-width: 180px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      color: var(--text);
+      font-size: 0.82rem;
+      font-family: 'Cascadia Code', monospace;
+      outline: none;
+    }
+    .try-input:focus { border-color: var(--accent); }
+    .try-btn {
+      padding: 0.5rem 1.1rem;
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .try-btn:hover { background: #00b894; }
+    .try-result {
+      margin-top: 0.8rem;
+      padding: 0.8rem;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'Cascadia Code', monospace;
+      font-size: 0.78rem;
+      max-height: 280px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #e6edf3;
+      display: none;
+    }
+    .try-result.visible { display: block; }
+    .result-ok  { color: var(--success); }
+    .result-err { color: var(--danger); }
+
+    /* Info boxes */
+    .info-box {
+      border-left: 4px solid var(--info);
+      background: rgba(88,166,255,0.06);
+      padding: 1rem 1.2rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin-bottom: 1.2rem;
+      font-size: 0.88rem;
+    }
+    .info-box.warning { border-color: var(--warning); background: rgba(210,153,34,0.06); }
+    .info-box.success { border-color: var(--success); background: rgba(63,185,80,0.06); }
+    .info-box.danger  { border-color: var(--danger);  background: rgba(248,81,73,0.06); }
+    .info-box .title  { font-weight: 700; margin-bottom: 0.3rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-box p { color: var(--text-muted); line-height: 1.6; }
+
+    /* Copy button */
+    .copy-btn {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text-muted); padding: 0.2rem 0.6rem;
+      border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+
+    /* Performance table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 1.2rem;
+    }
+    th {
+      background: #0d1117;
+      padding: 0.6rem 1rem;
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .td-ok     { color: var(--success); font-weight: 600; }
+    .td-warn   { color: var(--warning); font-weight: 600; }
+    .td-bad    { color: var(--danger);  font-weight: 600; }
+
+    /* Accordion */
+    .accordion { margin-bottom: 0.5rem; }
+    .accordion-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.9rem 1.2rem;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: border-color 0.2s;
+      font-size: 0.9rem; font-weight: 600;
+      user-select: none;
+    }
+    .accordion-header:hover { border-color: var(--accent); }
+    .accordion-header.open { border-radius: var(--radius) var(--radius) 0 0; border-color: var(--accent); border-bottom-color: var(--border); }
+    .accordion-body {
+      background: var(--card-bg);
+      border: 1px solid var(--accent);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 1.2rem;
+      display: none;
+    }
+    .accordion-body.open { display: block; }
+    .chevron { transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+
+    /* Diagram */
+    .diagram {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-family: 'Cascadia Code', monospace;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 2;
+      margin-bottom: 1.2rem;
+    }
+    .diagram .node { color: var(--accent); font-weight: 700; }
+    .diagram .arrow { color: #58a6ff; }
+    .diagram .file  { color: #d2a8ff; }
+
+    /* Footer */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+    footer span { color: var(--accent); font-weight: 600; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { padding: 1.5rem 1rem; }
+      .route-desc { display: none; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 3rem 1rem 2rem; }
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ NAVBAR -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <span>⚡</span>
+    <span>Web Server <span>Express</span></span>
+    <span class="nav-badge">GUÍA</span>
+  </div>
+  <div class="nav-links">
+    <a href="/">Inicio</a>
+    <a href="/formulario.html">Formulario</a>
+    <a href="/formularioMinio.html">MinIO</a>
+    <a href="/cors.html">CORS</a>
+    <a href="https://github.com/luisprado119/WEB-SERVER-EXPRESS" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ HERO -->
+<section class="hero">
+  <div class="hero-label">codecrypto.academy</div>
+  <h1>Guía Práctica<br><span>Web Server Express</span></h1>
+  <p>Todos los conceptos practicados con Node.js + Express.js: desde rutas básicas hasta Blockchain, Object Storage y Server Side Pages.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="num">16</span><span class="lbl">Secciones</span></div>
+    <div class="hero-stat"><span class="num">60+</span><span class="lbl">Rutas</span></div>
+    <div class="hero-stat"><span class="num">5</span><span class="lbl">Tecnologías</span></div>
+    <div class="hero-stat"><span class="num">100%</span><span class="lbl">Funcional</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ MAIN -->
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <p class="sidebar-title">Fundamentos</p>
+    <a class="sidebar-item active" href="#express-basico"><span class="icon">🚀</span> Express Básico</a>
+    <a class="sidebar-item" href="#middlewares"><span class="icon">🔗</span> Middlewares</a>
+    <a class="sidebar-item" href="#rutas-get"><span class="icon">📡</span> Rutas GET</a>
+    <a class="sidebar-item" href="#rutas-post"><span class="icon">📨</span> Rutas POST</a>
+    <a class="sidebar-item" href="#ficheros"><span class="icon">📁</span> Subida Ficheros</a>
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-title">Errores HTTP</p>
+    <a class="sidebar-item" href="#errores-http"><span class="icon">⚡</span> Códigos HTTP</a>
+    <a class="sidebar-item" href="#error-404"><span class="icon">🔍</span> 404 Not Found</a>
+    <a class="sidebar-item" href="#error-500"><span class="icon">💥</span> Error 500</a>
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-title">Base de Datos</p>
+    <a class="sidebar-item" href="#postgresql"><span class="icon">🐘</span> PostgreSQL</a>
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-title">Tecnologías Avanzadas</p>
+    <a class="sidebar-item" href="#web3"><span class="icon">⛓️</span> Blockchain Web3</a>
+    <a class="sidebar-item" href="#minio"><span class="icon">🪣</span> MinIO Storage</a>
+    <a class="sidebar-item" href="#cors"><span class="icon">🌐</span> CORS</a>
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-title">Arquitectura</p>
+    <a class="sidebar-item" href="#server-side"><span class="icon">🖥️</span> Server Side Pages</a>
+    <a class="sidebar-item" href="#router"><span class="icon">🗂️</span> Express Router</a>
+    <a class="sidebar-item" href="#performance"><span class="icon">📊</span> Performance</a>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- ══════════════════════════════════════════
+         1. EXPRESS BÁSICO
+    ══════════════════════════════════════════ -->
+    <section class="section" id="express-basico">
+      <div class="section-header">
+        <div class="section-icon blue">🚀</div>
+        <div>
+          <h2 class="section-title">Express Básico</h2>
+          <p class="section-subtitle">Configuración inicial, servidor y archivos estáticos</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">¿Qué es Express.js?</p>
+        <p>Framework minimalista y flexible para Node.js que permite crear servidores HTTP con rutas, middlewares y plantillas. Es el más popular del ecosistema Node.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Instalación</p>
+          <p class="card-title">Iniciar un proyecto</p>
+          <pre><code><span class="cmt"># Inicializar package.json</span>
+npm init -y
+<span class="cmt"># Instalar express</span>
+npm install express</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Servidor mínimo</p>
+          <p class="card-title">Hola mundo en Express</p>
+          <pre><code><span class="kw">const</span> <span class="var">express</span> = require(<span class="str">'express'</span>)
+<span class="kw">const</span> <span class="var">app</span> = <span class="var">express</span>()
+
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/'</span>, (req, res) => {
+  res.<span class="fn">send</span>(<span class="str">'Hola Mundo'</span>)
+})
+
+<span class="var">app</span>.<span class="fn">listen</span>(<span class="num">3333</span>)</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Archivos estáticos</p>
+          <p class="card-title">Servir HTML, CSS, imágenes</p>
+          <pre><code><span class="cmt">// Sirve toda la carpeta /public</span>
+<span class="var">app</span>.<span class="fn">use</span>(express.<span class="fn">static</span>(<span class="str">'public'</span>))
+
+<span class="cmt">// Con prefijo de URL</span>
+<span class="var">app</span>.<span class="fn">use</span>(<span class="str">'/docs'</span>,
+  express.<span class="fn">static</span>(<span class="str">'docs'</span>)
+)</code></pre>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/ping</span>
+          <span class="route-desc">Health check — verifica que el servidor está activo</span>
+          <a class="route-link" href="/ping" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/hola</span>
+          <span class="route-desc">Respuesta de texto simple</span>
+          <a class="route-link" href="/hola" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/welcome</span>
+          <span class="route-desc">Ruta de bienvenida</span>
+          <a class="route-link" href="/welcome" target="_blank">Probar →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         2. MIDDLEWARES
+    ══════════════════════════════════════════ -->
+    <section class="section" id="middlewares">
+      <div class="section-header">
+        <div class="section-icon teal">🔗</div>
+        <div>
+          <h2 class="section-title">Middlewares</h2>
+          <p class="section-subtitle">Funciones que procesan cada petición antes de llegar a la ruta</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">Flujo de un middleware</p>
+        <p>Petición → Middleware 1 → Middleware 2 → … → Ruta → Respuesta. Cada middleware tiene acceso a <code>(req, res, next)</code> y puede modificar la petición, responder directamente o pasar al siguiente con <code>next()</code>.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Morgan</p>
+          <p class="card-title">Logging HTTP</p>
+          <p class="card-desc">Registra cada petición en consola con método, URL, status y tiempo de respuesta.</p>
+          <div class="card-tags"><span class="tag">npm i morgan</span></div>
+          <pre style="margin-top:0.8rem"><code><span class="kw">const</span> <span class="var">morgan</span> = require(<span class="str">'morgan'</span>)
+<span class="var">app</span>.<span class="fn">use</span>(<span class="var">morgan</span>(<span class="str">'dev'</span>))</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">express-fileupload</p>
+          <p class="card-title">Subida de ficheros</p>
+          <p class="card-desc">Intercepta el body <code>multipart/form-data</code> y coloca los ficheros en <code>req.files</code>.</p>
+          <div class="card-tags"><span class="tag">npm i express-fileupload</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">express.json</p>
+          <p class="card-title">Parseo del body</p>
+          <p class="card-desc">Parsea el body JSON y lo hace disponible en <code>req.body</code>.</p>
+          <pre style="margin-top:0.8rem"><code><span class="var">app</span>.<span class="fn">use</span>(express.<span class="fn">json</span>())
+<span class="var">app</span>.<span class="fn">use</span>(express.<span class="fn">urlencoded</span>({
+  extended: <span class="kw">true</span>
+}))</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Personalizado</p>
+          <p class="card-title">Middleware propio</p>
+          <p class="card-desc">Cualquier función con <code>(req, res, next)</code>. Se ejecuta en cada petición si se monta con <code>app.use()</code>.</p>
+          <pre style="margin-top:0.8rem"><code><span class="var">app</span>.<span class="fn">use</span>((req, res, next) => {
+  console.<span class="fn">log</span>(req.method, req.url)
+  <span class="fn">next</span>()
+})</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         3. RUTAS GET
+    ══════════════════════════════════════════ -->
+    <section class="section" id="rutas-get">
+      <div class="section-header">
+        <div class="section-icon green">📡</div>
+        <div>
+          <h2 class="section-title">Rutas GET</h2>
+          <p class="section-subtitle">Parámetros de ruta, query string y respuestas</p>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">req.params</p>
+          <p class="card-title">Parámetros de ruta</p>
+          <pre><code><span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/usuarios/:id'</span>, (req, res) => {
+  <span class="kw">const</span> { id } = req.params
+  res.<span class="fn">json</span>({ id })
+})</code></pre>
+          <div class="card-tags"><span class="tag">:param dinámico</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">req.query</p>
+          <p class="card-title">Query string</p>
+          <pre><code><span class="cmt">// GET /buscar?q=express&limit=5</span>
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/buscar'</span>, (req, res) => {
+  <span class="kw">const</span> { q, limit } = req.query
+  res.<span class="fn">json</span>({ q, limit })
+})</code></pre>
+          <div class="card-tags"><span class="tag">?clave=valor</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">Respuestas</p>
+          <p class="card-title">Métodos de res</p>
+          <pre><code>res.<span class="fn">send</span>(<span class="str">'texto'</span>)
+res.<span class="fn">json</span>({ clave: <span class="str">'valor'</span> })
+res.<span class="fn">sendFile</span>(ruta)
+res.<span class="fn">redirect</span>(<span class="str">'/nueva-ruta'</span>)
+res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ ... })</code></pre>
+        </div>
+      </div>
+
+      <div class="try-panel">
+        <div class="try-header">⚡ Probar rutas GET interactivas</div>
+        <div class="try-body">
+          <div class="try-row">
+            <span style="color:var(--text-muted);font-size:0.8rem;min-width:70px">GET</span>
+            <input class="try-input" id="getUrl" type="text" value="/ping" placeholder="/ruta">
+            <button class="try-btn" onclick="tryGet('getUrl','getResult')">Enviar</button>
+          </div>
+          <div class="try-result" id="getResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         4. RUTAS POST
+    ══════════════════════════════════════════ -->
+    <section class="section" id="rutas-post">
+      <div class="section-header">
+        <div class="section-icon blue">📨</div>
+        <div>
+          <h2 class="section-title">Rutas POST</h2>
+          <p class="section-subtitle">Recibir y procesar datos del cliente en el body</p>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/data</span>
+          <span class="route-desc">Recibe JSON → responde 201 Created</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/echoPost</span>
+          <span class="route-desc">Devuelve exactamente lo que recibe</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/echoPostJson</span>
+          <span class="route-desc">Echo del body + query string combinados</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/echoParamsPost/:cliente/facturas/:factura</span>
+          <span class="route-desc">params + query + body combinados</span>
+        </div>
+      </div>
+
+      <div class="try-panel">
+        <div class="try-header">⚡ Probar POST /echoPost</div>
+        <div class="try-body">
+          <div class="try-row">
+            <textarea class="try-input" id="postBody" rows="3" style="resize:vertical">{"nombre": "Luis", "curso": "Web Server Express"}</textarea>
+          </div>
+          <div class="try-row">
+            <button class="try-btn" onclick="tryPost('/echoPost','postBody','postResult')">Enviar POST</button>
+          </div>
+          <div class="try-result" id="postResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         5. SUBIDA DE FICHEROS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="ficheros">
+      <div class="section-header">
+        <div class="section-icon orange">📁</div>
+        <div>
+          <h2 class="section-title">Subida de Ficheros</h2>
+          <p class="section-subtitle">Multipart/form-data con express-fileupload</p>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">req.files</p>
+          <p class="card-title">Estructura del fichero</p>
+          <pre><code>req.files.campo.name     <span class="cmt">// nombre</span>
+req.files.campo.size     <span class="cmt">// bytes</span>
+req.files.campo.mimetype <span class="cmt">// tipo MIME</span>
+req.files.campo.data     <span class="cmt">// Buffer</span>
+.<span class="fn">mv</span>(ruta, callback)       <span class="cmt">// mover al disco</span></code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Múltiples ficheros</p>
+          <p class="card-title">Array de ficheros</p>
+          <pre><code><span class="cmt">// Si hay varios con el mismo campo:</span>
+<span class="kw">const</span> <span class="var">ficheros</span> = [].concat(
+  req.files.ficheros
+)
+<span class="var">ficheros</span>.<span class="fn">forEach</span>(f =>
+  f.<span class="fn">mv</span>(`uploads/${f.name}`)
+)</code></pre>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/upload</span>
+          <span class="route-desc">Subida genérica — cualquier campo</span>
+          <a class="route-link" href="/formulario.html" target="_blank">Formulario →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/upload/single</span>
+          <span class="route-desc">Un único fichero en campo 'fichero1'</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/upload/multi</span>
+          <span class="route-desc">Múltiples ficheros en campo 'ficheros'</span>
+          <a class="route-link" href="/formulario.html" target="_blank">Formulario →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         6. CÓDIGOS DE ERROR HTTP
+    ══════════════════════════════════════════ -->
+    <section class="section" id="errores-http">
+      <div class="section-header">
+        <div class="section-icon cyan">⚡</div>
+        <div>
+          <h2 class="section-title">Códigos de Estado HTTP</h2>
+          <p class="section-subtitle">2xx éxito · 3xx redirección · 4xx error cliente · 5xx error servidor</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Código</th><th>Nombre</th><th>Cuándo usarlo</th><th>Probar</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="td-ok">200</td><td>OK</td><td>Petición correcta (GET, PUT, PATCH exitosos)</td><td><a href="/ping" target="_blank">→</a></td></tr>
+          <tr><td class="td-ok">201</td><td>Created</td><td>Recurso creado con POST</td><td><a href="/data" target="_blank">→</a></td></tr>
+          <tr><td class="td-ok">204</td><td>No Content</td><td>Éxito sin cuerpo (DELETE)</td><td>—</td></tr>
+          <tr><td class="td-warn">301</td><td>Moved Permanently</td><td>Redirección permanente de URL</td><td>—</td></tr>
+          <tr><td class="td-warn">302</td><td>Found</td><td>Redirección temporal</td><td>—</td></tr>
+          <tr><td class="td-bad">400</td><td>Bad Request</td><td>Datos del cliente incorrectos o incompletos</td><td><a href="/error400" target="_blank">→</a></td></tr>
+          <tr><td class="td-bad">401</td><td>Unauthorized</td><td>Requiere autenticación</td><td>—</td></tr>
+          <tr><td class="td-bad">403</td><td>Forbidden</td><td>Autenticado pero sin permisos</td><td>—</td></tr>
+          <tr><td class="td-bad">404</td><td>Not Found</td><td>El recurso solicitado no existe</td><td><a href="/error404" target="_blank">→</a></td></tr>
+          <tr><td class="td-bad">500</td><td>Internal Server Error</td><td>Error inesperado en el servidor</td><td><a href="/error" target="_blank">→</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         7. 404 NOT FOUND
+    ══════════════════════════════════════════ -->
+    <section class="section" id="error-404">
+      <div class="section-header">
+        <div class="section-icon red">🔍</div>
+        <div>
+          <h2 class="section-title">404 Not Found</h2>
+          <p class="section-subtitle">Manejador global para rutas inexistentes</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">¿Cómo funciona?</p>
+        <p>El manejador 404 debe colocarse <strong>al final de todas las rutas</strong>. Express lo alcanza solo cuando ninguna ruta anterior coincidió con la petición. El wildcard <code>app.get('*', ...)</code> captura cualquier ruta no definida.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Opción 1 – Texto plano</p>
+          <p class="card-title">Respuesta directa</p>
+          <pre><code><span class="var">app</span>.<span class="fn">get</span>(<span class="str">'*'</span>, (req, res) => {
+  res.<span class="fn">status</span>(<span class="num">404</span>)
+     .<span class="fn">send</span>(<span class="str">'Lo sentimos, no tenemos esto'</span>)
+})</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Opción 2 – Página HTML ✓</p>
+          <p class="card-title">Redirección a página de error</p>
+          <pre><code><span class="var">app</span>.<span class="fn">get</span>(<span class="str">'*'</span>, (req, res) => {
+  res.<span class="fn">status</span>(<span class="num">404</span>)
+     .<span class="fn">redirect</span>(<span class="str">'/error_404.html'</span>)
+})</code></pre>
+          <div class="card-tags"><span class="tag">Mejor UX</span></div>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/ruta-que-no-existe</span>
+          <span class="route-desc">Prueba el manejador 404 personalizado</span>
+          <a class="route-link" href="/ruta-que-no-existe" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/error_404.html</span>
+          <span class="route-desc">Página de error 404 con diseño</span>
+          <a class="route-link" href="/error_404.html" target="_blank">Ver →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         8. ERROR 500
+    ══════════════════════════════════════════ -->
+    <section class="section" id="error-500">
+      <div class="section-header">
+        <div class="section-icon red">💥</div>
+        <div>
+          <h2 class="section-title">Error 500 – Internal Server Error</h2>
+          <p class="section-subtitle">Middleware de error de Express con 4 parámetros</p>
+        </div>
+      </div>
+
+      <div class="info-box warning">
+        <p class="title">⚠ Firma de 4 parámetros obligatoria</p>
+        <p>Express identifica un middleware como manejador de errores <strong>solo si tiene exactamente 4 parámetros</strong>: <code>(err, req, res, next)</code>. Si usas 3, Express no lo tratará como manejador de errores.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Ruta que falla</p>
+          <p class="card-title">Lanzar error deliberado</p>
+          <pre><code><span class="cmt">// Ruta de prueba que lanza un error</span>
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/error'</span>, (req, res) => {
+  <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'esto falla'</span>)
+})</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Middleware de error</p>
+          <p class="card-title">Capturar y responder</p>
+          <pre><code><span class="var">app</span>.<span class="fn">use</span>((err, req, res, next) => {
+  console.<span class="fn">error</span>(err.stack)
+  res.<span class="fn">status</span>(<span class="num">500</span>)
+     .<span class="fn">send</span>(<span class="str">`${err} — 500`</span>)
+})</code></pre>
+          <div class="card-tags"><span class="tag red">4 parámetros</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">async/await</p>
+          <p class="card-title">Errores asíncronos</p>
+          <pre><code><span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/async'</span>, <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchData</span>()
+    res.<span class="fn">json</span>(data)
+  } <span class="kw">catch</span> (err) {
+    <span class="fn">next</span>(err) <span class="cmt">// pasa al handler</span>
+  }
+})</code></pre>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/error</span>
+          <span class="route-desc">Lanza Error('esto falla') — activa el middleware 500</span>
+          <a class="route-link" href="/error" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/error500</span>
+          <span class="route-desc">Responde directamente con status 500</span>
+          <a class="route-link" href="/error500" target="_blank">Probar →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         9. POSTGRESQL
+    ══════════════════════════════════════════ -->
+    <section class="section" id="postgresql">
+      <div class="section-header">
+        <div class="section-icon blue">🐘</div>
+        <div>
+          <h2 class="section-title">Base de Datos – PostgreSQL</h2>
+          <p class="section-subtitle">Pool de conexiones con pg · Consultas parametrizadas</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">Pool de conexiones</p>
+        <p>En lugar de abrir y cerrar una conexión por cada consulta, <code>pg.Pool</code> mantiene un grupo de conexiones reutilizables, mejorando el rendimiento bajo carga concurrente.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Configuración</p>
+          <p class="card-title">Conectar a PostgreSQL</p>
+          <pre><code><span class="kw">const</span> { Pool } = require(<span class="str">'pg'</span>)
+<span class="kw">const</span> <span class="var">pool</span> = <span class="kw">new</span> <span class="fn">Pool</span>({
+  host:     process.env.DB_HOST,
+  port:     process.env.DB_PORT,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD
+})</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Consulta parametrizada</p>
+          <p class="card-title">SQL injection seguro</p>
+          <pre><code><span class="kw">const</span> <span class="var">result</span> = <span class="kw">await</span> pool.<span class="fn">query</span>(
+  <span class="str">'SELECT * FROM orders WHERE customer_id = $1'</span>,
+  [req.params.clienteId]
+)
+res.<span class="fn">json</span>(<span class="var">result</span>.rows)</code></pre>
+          <div class="card-tags"><span class="tag">$1, $2 → sin inyección SQL</span></div>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/bdd/test</span>
+          <span class="route-desc">Test de conexión — SELECT now()</span>
+          <a class="route-link" href="/bdd/test" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/bdd/customers</span>
+          <span class="route-desc">Lista todos los customers</span>
+          <a class="route-link" href="/bdd/customers" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/bdd/orders/:cliente</span>
+          <span class="route-desc">Pedidos de un cliente (ej: /bdd/orders/1)</span>
+          <a class="route-link" href="/bdd/orders/1" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/bdd/orders/:cliente/:id</span>
+          <span class="route-desc">Pedido concreto (ej: /bdd/orders/1/10248)</span>
+          <a class="route-link" href="/bdd/orders/1/10248" target="_blank">Probar →</a>
+        </div>
+      </div>
+
+      <div class="try-panel">
+        <div class="try-header">⚡ Consulta PostgreSQL interactiva</div>
+        <div class="try-body">
+          <div class="try-row">
+            <span style="color:var(--text-muted);font-size:0.8rem;min-width:120px">Cliente ID:</span>
+            <input class="try-input" id="bddCliente" type="text" value="1" style="max-width:120px">
+            <button class="try-btn" onclick="tryGetParam('/bdd/orders/','bddCliente','bddResult')">Ver pedidos</button>
+          </div>
+          <div class="try-result" id="bddResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         10. WEB3 / BLOCKCHAIN
+    ══════════════════════════════════════════ -->
+    <section class="section" id="web3">
+      <div class="section-header">
+        <div class="section-icon purple">⛓️</div>
+        <div>
+          <h2 class="section-title">Blockchain – Web3.js</h2>
+          <p class="section-subtitle">Ethereum · Infura · Balances · Bloques · BigInt</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">Web3.js v4 — cambio importante de importación</p>
+        <p>En Web3 v4 ya no se importa el módulo completo. Se usa desestructuración: <code>const { Web3 } = require('web3')</code>. Además, todos los valores numéricos de la blockchain son <code>BigInt</code> y deben convertirse antes de enviarse con <code>res.json()</code>.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Configuración</p>
+          <p class="card-title">Conectar a Infura</p>
+          <pre><code><span class="kw">const</span> { Web3 } = require(<span class="str">'web3'</span>)
+<span class="kw">const</span> <span class="var">web3</span> = <span class="kw">new</span> <span class="fn">Web3</span>(
+  process.env.WEB3_PROVIDER_URL
+)</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">BigInt Serialization</p>
+          <p class="card-title">Helper para res.json()</p>
+          <pre><code><span class="kw">const</span> <span class="fn">serializeBigInt</span> = (obj) =>
+  JSON.<span class="fn">parse</span>(JSON.<span class="fn">stringify</span>(obj,
+    (_, v) => <span class="kw">typeof</span> v === <span class="str">'bigint'</span>
+      ? v.<span class="fn">toString</span>() : v
+  ))</code></pre>
+          <div class="card-tags"><span class="tag purple">BigInt → string</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">Promise.all()</p>
+          <p class="card-title">Llamadas paralelas</p>
+          <pre><code><span class="kw">const</span> [balance, txCount] =
+  <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    web3.eth.<span class="fn">getBalance</span>(addr),
+    web3.eth.<span class="fn">getTransactionCount</span>(addr)
+  ])</code></pre>
+          <div class="card-tags"><span class="tag">Performance</span></div>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/web3/balance/:address</span>
+          <span class="route-desc">Balance ETH de un wallet en Wei</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/web3/wallet/:address</span>
+          <span class="route-desc">Info completa: balance + nonce + último bloque</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/web3/eth/getblock/:numero</span>
+          <span class="route-desc">Datos de un bloque Ethereum por número</span>
+        </div>
+      </div>
+
+      <div class="try-panel">
+        <div class="try-header">⚡ Consultar wallet Ethereum</div>
+        <div class="try-body">
+          <div class="try-row">
+            <input class="try-input" id="ethAddr" type="text" value="0xCaB113E18897a870E8489DA9b8EA37fce653dE2D" placeholder="0x...">
+            <button class="try-btn" onclick="tryGetParam('/web3/wallet/','ethAddr','ethResult')">Consultar</button>
+          </div>
+          <div class="try-result" id="ethResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         11. MINIO
+    ══════════════════════════════════════════ -->
+    <section class="section" id="minio">
+      <div class="section-header">
+        <div class="section-icon gold">🪣</div>
+        <div>
+          <h2 class="section-title">Object Storage – MinIO</h2>
+          <p class="section-subtitle">Compatible con AWS S3 · Buckets · Objetos · URLs firmadas</p>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Conceptos</p>
+          <p class="card-title">Bucket vs Object</p>
+          <p class="card-desc"><strong>Bucket</strong> = contenedor raíz (como una carpeta). <strong>Object</strong> = cualquier fichero dentro de un bucket, identificado por su <strong>key</strong> (nombre/ruta).</p>
+          <div class="card-tags"><span class="tag gold">Escala masiva</span><span class="tag gold">URL firmadas</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">Iniciar MinIO</p>
+          <p class="card-title">Comando PowerShell</p>
+          <pre><code>$env:MINIO_ROOT_USER="minioadmin"
+$env:MINIO_ROOT_PASSWORD="minioadmin"
+.\minio.exe server C:\minio-data `
+  --console-address :9001</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">vs fs local</p>
+          <p class="card-title">¿Por qué MinIO?</p>
+          <p class="card-desc">A diferencia de <code>fs</code> (disco del servidor), MinIO ofrece URLs firmadas, políticas de acceso, replicación y es compatible con AWS S3, permitiendo migrar sin cambiar el código.</p>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/minio/buckets</span>
+          <span class="route-desc">Lista todos los buckets</span>
+          <a class="route-link" href="/minio/buckets" target="_blank">Probar →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/minio/buckets/:bucket</span>
+          <span class="route-desc">Crear un nuevo bucket</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/minio/buckets/:bucket/files</span>
+          <span class="route-desc">Listar ficheros de un bucket</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">/minio/buckets/:bucket/upload</span>
+          <span class="route-desc">Subir un fichero (multipart/form-data)</span>
+          <a class="route-link" href="/formularioMinio.html" target="_blank">Formulario →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/minio/buckets/:bucket/files/:filename/url</span>
+          <span class="route-desc">URL de descarga firmada (presigned)</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/minio/buckets/:bucket/files/:filename</span>
+          <span class="route-desc">Descargar/recuperar un fichero</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-delete">DELETE</span>
+          <span class="route-path">/minio/buckets/:bucket/files/:filename</span>
+          <span class="route-desc">Eliminar un fichero (async/await)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         12. CORS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="cors">
+      <div class="section-header">
+        <div class="section-icon cyan">🌐</div>
+        <div>
+          <h2 class="section-title">CORS</h2>
+          <p class="section-subtitle">Cross-Origin Resource Sharing · Same-Origin Policy · Preflight</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">¿Qué es CORS?</p>
+        <p>Los navegadores aplican la <strong>Same-Origin Policy</strong>: bloquean peticiones fetch/XHR a un dominio diferente al de la página. CORS permite al servidor relajar esta restricción añadiendo cabeceras HTTP que el navegador entiende.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Wildcard (todos)</p>
+          <p class="card-title">CORS abierto</p>
+          <pre><code><span class="kw">const</span> <span class="var">cors</span> = require(<span class="str">'cors'</span>)
+<span class="cmt">// Cualquier origen puede acceder</span>
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/datos'</span>, <span class="fn">cors</span>(), handler)</code></pre>
+          <div class="card-tags"><span class="tag">Access-Control-Allow-Origin: *</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">Origen específico</p>
+          <p class="card-title">CORS restringido</p>
+          <pre><code><span class="kw">const</span> <span class="var">corsOpts</span> = <span class="fn">cors</span>({
+  origin: <span class="str">'https://miapp.com'</span>
+})
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/privado'</span>, <span class="var">corsOpts</span>, handler)</code></pre>
+          <div class="card-tags"><span class="tag orange">Solo ese origen</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">Whitelist dinámica</p>
+          <p class="card-title">Lista de orígenes</p>
+          <pre><code><span class="kw">const</span> <span class="var">lista</span> = [<span class="str">'http://a.com'</span>, <span class="str">'http://b.com'</span>]
+<span class="fn">cors</span>({ origin: (orig, cb) => {
+  <span class="fn">cb</span>(<span class="kw">null</span>, <span class="var">lista</span>.<span class="fn">includes</span>(orig))
+}})</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Configuración completa</p>
+          <p class="card-title">Opciones avanzadas</p>
+          <pre><code><span class="fn">cors</span>({
+  origin:      <span class="str">'http://localhost:3333'</span>,
+  methods:     [<span class="str">'GET'</span>,<span class="str">'POST'</span>,<span class="str">'DELETE'</span>],
+  credentials: <span class="kw">true</span>,
+  maxAge:      <span class="num">86400</span>
+})</code></pre>
+          <div class="card-tags"><span class="tag">Preflight cache</span><span class="tag">Credentials</span></div>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">:3345/sin-cors</span>
+          <span class="route-desc">Sin cabeceras CORS → el navegador bloquea</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">:3345/cors-abierto</span>
+          <span class="route-desc">Access-Control-Allow-Origin: *</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">:3345/cors-restringido</span>
+          <span class="route-desc">Solo acepta http://localhost:3333</span>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-post">POST</span>
+          <span class="route-path">:3345/cors-post</span>
+          <span class="route-desc">Demuestra Preflight OPTIONS automático</span>
+        </div>
+      </div>
+
+      <a href="/cors.html" class="try-btn" style="display:inline-block;padding:0.7rem 1.5rem;border-radius:8px;margin-top:0.5rem">
+        🌐 Abrir Demo CORS Interactiva →
+      </a>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         13. SERVER SIDE PAGES
+    ══════════════════════════════════════════ -->
+    <section class="section" id="server-side">
+      <div class="section-header">
+        <div class="section-icon teal">🖥️</div>
+        <div>
+          <h2 class="section-title">Server Side Pages – Pug</h2>
+          <p class="section-subtitle">Motor de plantillas · HTML dinámico generado en el servidor</p>
+        </div>
+      </div>
+
+      <div class="info-box success">
+        <p class="title">✓ Diferencia clave</p>
+        <p><strong>Archivos estáticos</strong>: el HTML está en disco y se sirve igual siempre. <strong>Plantillas Pug</strong>: el servidor genera el HTML en tiempo real combinando la plantilla con datos variables antes de enviárselo al cliente.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Sintaxis Pug</p>
+          <p class="card-title">Sin corchetes ni etiquetas cierre</p>
+          <pre><code>doctype html
+html(lang='es')
+  head
+    title= <span class="var">titulo</span>
+  body
+    h1= <span class="var">titulo</span>
+    p Bienvenido, #{<span class="var">nombre</span>}
+    ul
+      each item in <span class="var">items</span>
+        li= item</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Renderizado</p>
+          <p class="card-title">Pasar variables al template</p>
+          <pre><code><span class="var">app</span>.<span class="fn">set</span>(<span class="str">'view engine'</span>, <span class="str">'pug'</span>)
+
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'/t1'</span>, (req, res) => {
+  res.<span class="fn">render</span>(<span class="str">'t1'</span>, {
+    titulo: <span class="str">'Mi título'</span>,
+    items:  [<span class="str">'a'</span>, <span class="str">'b'</span>, <span class="str">'c'</span>]
+  })
+})</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Instalación</p>
+          <p class="card-title">Paquete requerido</p>
+          <pre><code>npm install pug
+
+<span class="cmt"># Estructura de directorios:</span>
+views/
+  t1.pug
+  usuario.pug
+  layout.pug</code></pre>
+          <div class="card-tags"><span class="tag">npm i pug</span></div>
+        </div>
+      </div>
+
+      <div class="route-list">
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/t1</span>
+          <span class="route-desc">Plantilla básica con array de items</span>
+          <a class="route-link" href="/t1" target="_blank">Ver →</a>
+        </div>
+        <div class="route-item">
+          <span class="route-method method-get">GET</span>
+          <span class="route-path">/usuario/:nombre</span>
+          <span class="route-desc">Perfil dinámico — prueba con tu nombre</span>
+          <a class="route-link" href="/usuario/Ana" target="_blank">Ver →</a>
+        </div>
+      </div>
+
+      <div class="try-panel">
+        <div class="try-header">⚡ Generar página dinámica con Pug</div>
+        <div class="try-body">
+          <div class="try-row">
+            <span style="color:var(--text-muted);font-size:0.8rem;min-width:80px">Nombre:</span>
+            <input class="try-input" id="pugNombre" type="text" value="Luis" style="max-width:180px">
+            <button class="try-btn" onclick="openPug()">Abrir página →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         14. EXPRESS ROUTER
+    ══════════════════════════════════════════ -->
+    <section class="section" id="router">
+      <div class="section-header">
+        <div class="section-icon green">🗂️</div>
+        <div>
+          <h2 class="section-title">Organización con Express Router</h2>
+          <p class="section-subtitle">Dividir rutas en módulos · Escalabilidad · Trabajo en equipo</p>
+        </div>
+      </div>
+
+      <div class="diagram">
+        <span class="node">app.js</span> <span class="arrow">──►</span> app.use(<span class="str">'/api/clientes'</span>,  ···) <span class="arrow">──►</span> <span class="file">routes/clientes.js</span>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">──►</span> app.use(<span class="str">'/api/productos'</span>, ···) <span class="arrow">──►</span> <span class="file">routes/productos.js</span>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">──►</span> app.use(<span class="str">'/api/facturas'</span>,  ···) <span class="arrow">──►</span> <span class="file">routes/facturas.js</span>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">Estructura de un Router</p>
+          <p class="card-title">routes/clientes.js</p>
+          <pre><code><span class="kw">const</span> <span class="var">router</span> = express.<span class="fn">Router</span>()
+
+<span class="var">router</span>.<span class="fn">get</span>(<span class="str">'/'</span>, handler)        <span class="cmt">// GET /api/clientes</span>
+<span class="var">router</span>.<span class="fn">get</span>(<span class="str">'/:id'</span>, handler)     <span class="cmt">// GET /api/clientes/:id</span>
+<span class="var">router</span>.<span class="fn">post</span>(<span class="str">'/'</span>, handler)       <span class="cmt">// POST /api/clientes</span>
+<span class="var">router</span>.<span class="fn">delete</span>(<span class="str">'/:id'</span>, handler)  <span class="cmt">// DELETE /api/clientes/:id</span>
+
+module.exports = { clientes: <span class="var">router</span> }</code></pre>
+        </div>
+        <div class="card">
+          <p class="card-label">Montar en app.js</p>
+          <p class="card-title">app.use() con prefijo</p>
+          <pre><code><span class="kw">const</span> { clientes } = require(<span class="str">'./routes/clientes'</span>)
+
+<span class="cmt">// Todas las rutas del router quedan</span>
+<span class="cmt">// bajo el prefijo /api/clientes</span>
+<span class="var">app</span>.<span class="fn">use</span>(<span class="str">'/api/clientes'</span>, <span class="var">clientes</span>)</code></pre>
+        </div>
+      </div>
+
+      <!-- Acordeones por router -->
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          🗂️ Router Clientes — <code>/api/clientes</code>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="accordion-body">
+          <div class="route-list">
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/clientes</span><span class="route-desc">Lista todos los clientes</span><a class="route-link" href="/api/clientes" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/clientes/:id</span><span class="route-desc">Cliente por ID</span><a class="route-link" href="/api/clientes/1" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-post">POST</span><span class="route-path">/api/clientes</span><span class="route-desc">Crear cliente <code>{"nombre":"X","email":"x@x.com"}</code></span></div>
+            <div class="route-item"><span class="route-method method-put">PUT</span><span class="route-path">/api/clientes/:id</span><span class="route-desc">Actualizar cliente</span></div>
+            <div class="route-item"><span class="route-method method-delete">DELETE</span><span class="route-path">/api/clientes/:id</span><span class="route-desc">Eliminar cliente</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          📦 Router Productos — <code>/api/productos</code>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="accordion-body">
+          <div class="route-list">
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/productos</span><span class="route-desc">Lista todos; acepta ?categoria=X</span><a class="route-link" href="/api/productos" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/productos/:id</span><span class="route-desc">Producto por ID</span><a class="route-link" href="/api/productos/1" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-post">POST</span><span class="route-path">/api/productos</span><span class="route-desc">Crear producto <code>{"nombre":"X","precio":99}</code></span></div>
+            <div class="route-item"><span class="route-method method-put">PUT</span><span class="route-path">/api/productos/:id</span><span class="route-desc">Actualizar producto</span></div>
+            <div class="route-item"><span class="route-method method-delete">DELETE</span><span class="route-path">/api/productos/:id</span><span class="route-desc">Eliminar producto</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          🧾 Router Facturas — <code>/api/facturas</code>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="accordion-body">
+          <div class="route-list">
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/facturas</span><span class="route-desc">Lista todas; acepta ?estado=pendiente&clienteId=1</span><a class="route-link" href="/api/facturas" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-get">GET</span><span class="route-path">/api/facturas/:id</span><span class="route-desc">Factura por ID (ej: F2024001)</span><a class="route-link" href="/api/facturas/F2024001" target="_blank">→</a></div>
+            <div class="route-item"><span class="route-method method-post">POST</span><span class="route-path">/api/facturas</span><span class="route-desc">Crear factura <code>{"clienteId":1,"monto":250}</code></span></div>
+            <div class="route-item"><span class="route-method method-patch">PATCH</span><span class="route-path">/api/facturas/:id/estado</span><span class="route-desc">Cambiar estado <code>{"estado":"pagada"}</code></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="try-panel" style="margin-top:1rem">
+        <div class="try-header">⚡ Probar Router API</div>
+        <div class="try-body">
+          <div class="try-row">
+            <input class="try-input" id="routerUrl" type="text" value="/api/clientes">
+            <button class="try-btn" onclick="tryGet('routerUrl','routerResult')">GET</button>
+          </div>
+          <div class="try-result" id="routerResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         15. PERFORMANCE
+    ══════════════════════════════════════════ -->
+    <section class="section" id="performance">
+      <div class="section-header">
+        <div class="section-icon orange">📊</div>
+        <div>
+          <h2 class="section-title">Analizar la Performance</h2>
+          <p class="section-subtitle">Benchmarking · Concurrencia · Tiempos de respuesta</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p class="title">¿Por qué medir el rendimiento?</p>
+        <p>Conocer cuántas peticiones por segundo puede manejar tu servidor, y cuáles rutas son más lentas, es esencial antes de poner una aplicación en producción. Node.js es no-bloqueante y puede manejar miles de conexiones concurrentes gracias al Event Loop.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card">
+          <p class="card-label">SuperBenchmarker (Docker)</p>
+          <p class="card-title">Benchmark con ab</p>
+          <pre><code><span class="cmt"># -v 2 → verbose, muestra detalles</span>
+docker run --rm jordi/ab -v 2 \
+  http://192.168.1.40:3333/ping</code></pre>
+          <div class="card-tags"><span class="tag">Apache Benchmark</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">autocannon (Node.js)</p>
+          <p class="card-title">Benchmark local</p>
+          <pre><code>npx autocannon \
+  -c 100 -d 10 \
+  http://localhost:3333/ping
+
+<span class="cmt"># -c 100 → 100 conexiones concurrentes</span>
+<span class="cmt"># -d 10  → 10 segundos de prueba</span></code></pre>
+          <div class="card-tags"><span class="tag">npm i -g autocannon</span></div>
+        </div>
+        <div class="card">
+          <p class="card-label">curl básico</p>
+          <p class="card-title">Tiempo de respuesta</p>
+          <pre><code><span class="cmt"># Mide tiempo total de la petición</span>
+curl -o /dev/null -s \
+  -w "Tiempo: %{time_total}s\n" \
+  http://localhost:3333/ping</code></pre>
+        </div>
+      </div>
+
+      <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem">Métricas típicas de un servidor Express básico en desarrollo:</p>
+      <table>
+        <thead>
+          <tr><th>Métrica</th><th>Valor típico</th><th>Valoración</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Peticiones/segundo (req/s)</td><td>5.000 – 20.000</td><td class="td-ok">Bueno para Node.js</td></tr>
+          <tr><td>Latencia media (GET simple)</td><td>1 – 10 ms</td><td class="td-ok">Excelente</td></tr>
+          <tr><td>Latencia con BD (PostgreSQL)</td><td>5 – 50 ms</td><td class="td-ok">Aceptable</td></tr>
+          <tr><td>Latencia con blockchain (Infura)</td><td>200 – 800 ms</td><td class="td-warn">Depende de red</td></tr>
+          <tr><td>Latencia con MinIO local</td><td>5 – 30 ms</td><td class="td-ok">Muy bueno</td></tr>
+          <tr><td>Errores bajo carga (1000 req)</td><td>0</td><td class="td-ok">Objetivo</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-box warning">
+        <p class="title">⚡ Tips de optimización</p>
+        <p>
+          • Usa <code>Promise.all()</code> para llamadas asíncronas independientes en paralelo.<br>
+          • Usa índices en PostgreSQL para consultas frecuentes.<br>
+          • Cachea respuestas repetitivas (Redis, memoria) para rutas de solo lectura.<br>
+          • Usa <code>compression</code> middleware para comprimir respuestas JSON grandes.<br>
+          • En producción, usa un proxy inverso (Nginx) delante de Express.
+        </p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ FOOTER -->
+<footer>
+  <p>Desarrollado con ❤ en <span>CodeCrypto Academy</span> · Node.js + Express.js · Web2.5 Technology</p>
+  <p style="margin-top:0.5rem;font-size:0.75rem">Stack: Express · PostgreSQL · Web3.js · MinIO · Pug · cors · morgan · express-fileupload · dotenv</p>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════ JS -->
+<script>
+  /* ─── Helpers de petición ─── */
+  async function tryGet(inputId, resultId) {
+    const url    = document.getElementById(inputId).value.trim()
+    const result = document.getElementById(resultId)
+    result.className = 'try-result visible'
+    result.textContent = 'Cargando...'
+    try {
+      const r = await fetch(url)
+      const text = await r.text()
+      let out
+      try { out = JSON.stringify(JSON.parse(text), null, 2) } catch { out = text }
+      result.textContent = `HTTP ${r.status} ${r.statusText}\n\n${out}`
+      result.style.color = r.ok ? 'var(--success)' : 'var(--danger)'
+    } catch (e) {
+      result.textContent = `Error: ${e.message}`
+      result.style.color = 'var(--danger)'
+    }
+  }
+
+  async function tryGetParam(base, inputId, resultId) {
+    const param  = document.getElementById(inputId).value.trim()
+    const url    = base + param
+    const result = document.getElementById(resultId)
+    result.className = 'try-result visible'
+    result.textContent = `GET ${url}\nCargando...`
+    try {
+      const r = await fetch(url)
+      const text = await r.text()
+      let out
+      try { out = JSON.stringify(JSON.parse(text), null, 2) } catch { out = text }
+      result.textContent = `HTTP ${r.status} ${r.statusText}\nURL: ${url}\n\n${out}`
+      result.style.color = r.ok ? 'var(--success)' : 'var(--danger)'
+    } catch (e) {
+      result.textContent = `Error: ${e.message}`
+      result.style.color = 'var(--danger)'
+    }
+  }
+
+  async function tryPost(url, bodyId, resultId) {
+    const body   = document.getElementById(bodyId).value.trim()
+    const result = document.getElementById(resultId)
+    result.className = 'try-result visible'
+    result.textContent = 'Enviando...'
+    try {
+      const r = await fetch(url, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    body
+      })
+      const text = await r.text()
+      let out
+      try { out = JSON.stringify(JSON.parse(text), null, 2) } catch { out = text }
+      result.textContent = `HTTP ${r.status} ${r.statusText}\n\n${out}`
+      result.style.color = r.ok ? 'var(--success)' : 'var(--danger)'
+    } catch (e) {
+      result.textContent = `Error: ${e.message}`
+      result.style.color = 'var(--danger)'
+    }
+  }
+
+  function openPug() {
+    const nombre = document.getElementById('pugNombre').value.trim() || 'Visitante'
+    window.open('/usuario/' + encodeURIComponent(nombre), '_blank')
+  }
+
+  /* ─── Accordion ─── */
+  function toggleAcc(header) {
+    const body    = header.nextElementSibling
+    const chevron = header.querySelector('.chevron')
+    const isOpen  = body.classList.contains('open')
+    body.classList.toggle('open', !isOpen)
+    header.classList.toggle('open', !isOpen)
+    chevron.classList.toggle('open', !isOpen)
+  }
+
+  /* ─── Sidebar active link on scroll ─── */
+  const sections = document.querySelectorAll('.section')
+  const sideItems = document.querySelectorAll('.sidebar-item')
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        sideItems.forEach(item => item.classList.remove('active'))
+        const active = document.querySelector(`.sidebar-item[href="#${entry.target.id}"]`)
+        if (active) active.classList.add('active')
+      }
+    })
+  }, { rootMargin: '-20% 0px -70% 0px' })
+
+  sections.forEach(s => observer.observe(s))
+
+  /* ─── Copy code buttons ─── */
+  document.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button')
+    btn.className = 'copy-btn'
+    btn.textContent = 'Copiar'
+    btn.onclick = () => {
+      navigator.clipboard.writeText(pre.innerText.replace(/^Copiar\n/, ''))
+      btn.textContent = '✓ Copiado'
+      setTimeout(() => btn.textContent = 'Copiar', 2000)
+    }
+    pre.style.position = 'relative'
+    pre.appendChild(btn)
+  })
+</script>
+</body>
+</html>

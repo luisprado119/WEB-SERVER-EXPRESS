@@ -1,8 +1,9 @@
 # Guía Práctica: Servidor Web con Node.js + Express
 
 Proyecto de prácticas del Máster **Web2.5 / Blockchain Technology**.  
-Cubre de forma progresiva todos los conceptos clave de un servidor web moderno con Node.js,
-desde las rutas más básicas hasta la integración con PostgreSQL, Ethereum y MinIO.
+Cubre de forma progresiva **17 secciones** con todos los conceptos clave de un servidor web moderno con Node.js, desde las rutas más básicas hasta Blockchain, Object Storage, CORS, Server Side Pages y organización con Express Router.
+
+> 📖 **Interfaz visual completa:** `http://localhost:3333/guia.html`
 
 ---
 
@@ -16,7 +17,7 @@ desde las rutas más básicas hasta la integración con PostgreSQL, Ethereum y M
 6. [Estructura del proyecto](#6-estructura-del-proyecto)
 7. [Conceptos practicados](#7-conceptos-practicados)
 8. [Referencia de rutas](#8-referencia-de-rutas)
-9. [Formularios HTML incluidos](#9-formularios-html-incluidos)
+9. [Páginas HTML incluidas](#9-páginas-html-incluidas)
 10. [Preparar para GitHub](#10-preparar-para-github)
 
 ---
@@ -31,9 +32,12 @@ desde las rutas más básicas hasta la integración con PostgreSQL, Ethereum y M
 | `pg` | ^8.x | Cliente PostgreSQL (consultas con Pool de conexiones) |
 | `web3` | ^4.x | Interacción con la blockchain de Ethereum |
 | `minio` | ^8.x | Object Storage compatible con AWS S3 |
+| `pug` | ^3.x | Motor de plantillas para Server Side Pages (SSR) |
+| `cors` | ^2.x | Middleware para gestionar CORS en Express |
+| `dotenv` | ^17.x | Variables de entorno desde fichero `.env` |
 
 ```bash
-npm install express morgan express-fileupload pg web3 minio
+npm install express morgan express-fileupload pg web3 minio pug cors dotenv
 ```
 
 ---
@@ -132,20 +136,32 @@ El servidor queda disponible en **http://localhost:3333**
 ```
 curso-express-primero/
 │
-├── app.js                      # Servidor Express completo (guía práctica anotada)
+├── app.js                      # Servidor Express completo (17 secciones anotadas)
+├── app-core.js                 # Servidor CORS de ejemplo (puerto 3345)
 ├── package.json                # Dependencias del proyecto
-├── requests.http               # 80+ peticiones de ejemplo para REST Client
+├── requests.http               # 120+ peticiones de ejemplo para REST Client
+├── .env                        # Variables de entorno locales (NO subir a Git)
+├── .env.example                # Plantilla de variables de entorno (SÍ subir)
 │
 ├── public/                     # Ficheros estáticos servidos por Express
-│   ├── index.html
+│   ├── index.html              # Página de inicio → enlaza a la guía
+│   ├── guia.html               # 📖 Guía visual completa con demos interactivas
 │   ├── formulario.html         # Práctica: POST, JSON, query params
 │   ├── formulario2.html        # Práctica: subida de ficheros al servidor
-│   └── formularioMinio.html    # Práctica: Object Storage con MinIO (UI completa)
+│   ├── formularioMinio.html    # Práctica: Object Storage con MinIO (UI completa)
+│   ├── cors.html               # Práctica: demo visual de 6 escenarios CORS
+│   └── error_404.html          # Página de error 404 personalizada
 │
-├── docs/                       # Segunda carpeta estática (montada en /docs)
-│   └── index.html
+├── views/                      # Plantillas Pug (Server Side Pages)
+│   ├── t1.pug                  # Plantilla básica con variables y lista
+│   └── usuario.pug             # Perfil de usuario dinámico por URL
 │
-├── uploads/                    # Ficheros subidos + logs de Morgan
+├── routes/                     # Express Router – rutas organizadas por módulo
+│   ├── clientes.js             # CRUD /api/clientes
+│   ├── productos.js            # CRUD /api/productos (con filtro por categoría)
+│   └── facturas.js             # CRUD /api/facturas (con PATCH de estado)
+│
+├── uploads/                    # Ficheros subidos + logs de Morgan (en .gitignore)
 │   ├── access.log              # Todas las peticiones
 │   ├── logsBuenos.txt          # Solo respuestas 2xx/3xx
 │   └── logsErrores.txt         # Solo respuestas 4xx/5xx
@@ -210,6 +226,39 @@ curso-express-primero/
   - `presignedGetObject()` → URL de descarga temporal y firmada
 - **Stream vs Presigned URL**: cuándo usar cada uno
 
+### CORS – Cross-Origin Resource Sharing
+- Qué es la **Same-Origin Policy** del navegador y por qué existe
+- Cómo el servidor añade cabeceras CORS para relajar la política
+- Preflight `OPTIONS`: cuándo y por qué el navegador lo envía automáticamente
+- Configuraciones: wildcard `*`, origen específico, whitelist dinámica, credenciales
+- Demo visual en `cors.html` (cliente en `:3333`, servidor en `:3345`)
+
+### Server Side Pages – Motor de plantillas Pug
+- Diferencia entre archivos estáticos y plantillas (SSR)
+- Configuración: `app.set('view engine', 'pug')`
+- Sintaxis Pug: indentación, variables `#{var}`, bucles `each`, condicionales
+- `res.render('plantilla', { datos })` para pasar variables al template
+- Dos plantillas: `/t1` (lista dinámica) y `/usuario/:nombre` (perfil por URL)
+
+### Organización con Express Router
+- Por qué dividir las rutas en módulos cuando el proyecto crece
+- Patrón: `express.Router()`, definir rutas, `module.exports`
+- Montar routers con `app.use('/api/recurso', router)`
+- CRUD completo para tres entidades: Clientes, Productos, Facturas
+- PATCH vs PUT: actualización parcial vs reemplazo completo
+
+### Manejadores globales de error (404 y 500)
+- `app.get('*path', handler)` al final para capturar rutas no definidas (Express 5)
+- Redirección a página de error personalizada con diseño
+- Middleware de error con 4 parámetros `(err, req, res, next)`
+- Diferencia entre `res.status(500)` y `throw new Error()` → `next(err)`
+
+### Performance y Benchmarking
+- `autocannon`: benchmark local con múltiples conexiones concurrentes
+- Apache Benchmark (`ab`) vía Docker con `jordi/ab`
+- Métricas: req/s, latencia p50/p99, tasa de errores
+- Estrategias de optimización: `Promise.all()`, índices BD, compresión, caché
+
 ### Asincronía en Node.js
 - **Promise chaining** (`.then()` / `.catch()`): patrón clásico
 - **`async` / `await`**: patrón moderno, código lineal, un solo `try/catch`
@@ -268,15 +317,61 @@ curso-express-primero/
 | DELETE | `/minio/buckets/:bucket/files/:filename/v1` | Eliminar (`.then/.catch`) |
 | DELETE | `/minio/buckets/:bucket/files/:filename` | Eliminar (async/await) |
 
+### CORS (servidor app-core.js en puerto 3345)
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `:3345/sin-cors` | Sin cabeceras CORS → bloqueado en navegador |
+| GET | `:3345/cors-abierto` | `Access-Control-Allow-Origin: *` |
+| GET | `:3345/cors-restringido` | Solo acepta `http://localhost:3333` |
+| GET | `:3345/cors-whitelist` | Whitelist dinámica de orígenes |
+| GET | `:3345/cors-completo` | Configuración avanzada con credentials y maxAge |
+| POST | `:3345/cors-post` | Demuestra el preflight OPTIONS |
+
+### Server Side Pages (Pug)
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/t1` | Plantilla básica con variables y lista |
+| GET | `/usuario/:nombre` | Perfil dinámico por nombre en URL |
+
+### Express Router – API REST
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/clientes` | Lista todos los clientes |
+| GET | `/api/clientes/:id` | Cliente por ID |
+| POST | `/api/clientes` | Crear cliente `{"nombre","email","pais"}` |
+| PUT | `/api/clientes/:id` | Actualizar cliente |
+| DELETE | `/api/clientes/:id` | Eliminar cliente |
+| GET | `/api/productos` | Lista productos (acepta `?categoria=X`) |
+| GET | `/api/productos/:id` | Producto por ID |
+| POST | `/api/productos` | Crear producto `{"nombre","precio","categoria"}` |
+| PUT | `/api/productos/:id` | Actualizar producto |
+| DELETE | `/api/productos/:id` | Eliminar producto |
+| GET | `/api/facturas` | Lista facturas (acepta `?estado=X&clienteId=Y`) |
+| GET | `/api/facturas/:id` | Factura por ID (ej: `F2024001`) |
+| POST | `/api/facturas` | Crear factura `{"clienteId","monto"}` |
+| PATCH | `/api/facturas/:id/estado` | Cambiar estado `{"estado":"pagada"}` |
+
+### Páginas de error
+| Ruta | Descripción |
+|---|---|
+| `/error` | Lanza `throw new Error()` → activa middleware 500 |
+| `/error400` | Responde directamente con 400 |
+| `/error500` | Responde directamente con 500 |
+| `/ruta-que-no-existe` | Activa el handler 404 → redirige a `/error_404.html` |
+
 ---
 
-## 9. Formularios HTML incluidos
+## 9. Páginas HTML incluidas
 
 | Fichero | URL | Contenido |
 |---|---|---|
+| `index.html` | `/` | Página de inicio → enlaza a la guía |
+| `guia.html` | `/guia.html` | 📖 Guía visual completa con demos interactivas |
 | `formulario.html` | `/formulario.html` | POST JSON, form-urlencoded, query params |
 | `formulario2.html` | `/formulario2.html` | Subida de ficheros al servidor |
 | `formularioMinio.html` | `/formularioMinio.html` | CRUD completo de buckets y objetos en MinIO |
+| `cors.html` | `/cors.html` | Demo visual de 6 escenarios CORS |
+| `error_404.html` | `/error_404.html` | Página de error 404 personalizada |
 
 ---
 

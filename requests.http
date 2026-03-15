@@ -899,3 +899,464 @@ DELETE http://localhost:3333/minio/buckets/mis-practicas/files/package.json
 #   6. Prefiere async/await sobre .then/.catch para código más legible
 #
 ###############################################################################
+
+
+###############################################################################
+# 14. CORS (Cross-Origin Resource Sharing)
+# ─────────────────────────────────────────
+# CORS es el mecanismo que controla si el NAVEGADOR permite que una página
+# en un origen (dominio:puerto) haga peticiones HTTP a OTRO origen distinto.
+#
+# CONCEPTOS:
+#   Same-Origin Policy → el navegador bloquea por defecto las peticiones
+#                        cross-origin (fetch, XHR) para proteger al usuario.
+#   CORS               → permite al SERVIDOR relajar esa política añadiendo
+#                        la cabecera: Access-Control-Allow-Origin
+#   Preflight          → antes de ciertas peticiones (POST con JSON, DELETE...),
+#                        el navegador envía un OPTIONS automático para preguntar
+#                        si el servidor acepta la petición real.
+#
+# SERVIDOR CORS DE PRUEBA (app-core.js):
+#   Ejecutar en terminal aparte: node app-core.js
+#   Escucha en: http://localhost:3345
+#   El cliente (cors.html) está en: http://localhost:3333
+#   → los dos son ORÍGENES DISTINTOS → se aplica CORS
+#
+# IMPORTANTE: estas rutas son del servidor app-core.js (puerto 3345),
+#             NO del servidor principal app.js (puerto 3333)
+###############################################################################
+
+# ── 14.1 Sin CORS ──────────────────────────────────────────────────────────
+# El servidor NO devuelve cabeceras CORS.
+# Resultado desde el navegador: BLOQUEADO (Network Error)
+# Resultado desde curl/REST Client: funciona (curl no aplica CORS)
+# LECCIÓN: CORS es una restricción del NAVEGADOR, no del servidor.
+GET http://localhost:3345/sin-cors
+
+###
+
+# ── 14.2 CORS abierto (wildcard) ───────────────────────────────────────────
+# Access-Control-Allow-Origin: *
+# Cualquier origen puede acceder a este recurso.
+# Uso: APIs públicas de solo lectura.
+# LIMITACIÓN: con wildcard (*) no se puede usar credentials: true
+GET http://localhost:3345/cors-abierto
+
+###
+
+# ── 14.3 CORS restringido (origen específico) ──────────────────────────────
+# Access-Control-Allow-Origin: http://localhost:3333
+# Solo acepta peticiones desde http://localhost:3333
+# Uso: tu frontend en producción llamando a tu backend.
+GET http://localhost:3345/cors-restringido
+
+###
+
+# ── 14.4 CORS con whitelist dinámica ──────────────────────────────────────
+# La función de origen valida si el origen está en la lista permitida.
+# Útil cuando tienes múltiples frontends (prod, staging, admin...).
+GET http://localhost:3345/cors-whitelist
+Origin: http://localhost:3333
+
+###
+
+# ── 14.5 CORS completo (configuración avanzada) ────────────────────────────
+# Incluye: origin, methods, allowedHeaders, exposedHeaders, credentials, maxAge
+#   methods      → qué verbos HTTP se permiten
+#   credentials  → permite enviar cookies/tokens de autenticación
+#   maxAge       → segundos que el navegador puede cachear el preflight
+GET http://localhost:3345/cors-completo
+
+###
+
+# ── 14.6 CORS con Preflight (POST) ─────────────────────────────────────────
+# POST con Content-Type: application/json dispara un preflight OPTIONS.
+# El navegador envía primero OPTIONS para verificar si el servidor permite
+# la petición. El servidor debe responder con las cabeceras correctas.
+POST http://localhost:3345/cors-post
+Content-Type: application/json
+
+{
+  "accion": "prueba-preflight",
+  "descripcion": "Este POST dispara un OPTIONS preflight automáticamente en el navegador"
+}
+
+###
+
+# ── 14.7 Verificar cabeceras CORS manualmente ──────────────────────────────
+# Simula el preflight que envía el navegador antes de un POST cross-origin.
+# El servidor debe responder con Access-Control-Allow-Methods y
+# Access-Control-Allow-Headers entre otros.
+OPTIONS http://localhost:3345/cors-post
+Origin: http://localhost:3333
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: Content-Type
+
+###
+
+# ── 14.8 Demo visual interactiva ───────────────────────────────────────────
+# Abre cors.html en el navegador para ver visualmente los 6 escenarios:
+# http://localhost:3333/cors.html
+#
+# BUENAS PRÁCTICAS CORS:
+#   1. Nunca uses * en producción para rutas con datos sensibles
+#   2. Especifica siempre el origen exacto de tu frontend
+#   3. Usa whitelist si tienes múltiples frontends legítimos
+#   4. maxAge reduce las peticiones OPTIONS y mejora el rendimiento
+#   5. credentials: true requiere un origin específico (no puede ser *)
+###############################################################################
+
+
+###############################################################################
+# 15. SERVER SIDE PAGES – Motor de plantillas Pug
+# ─────────────────────────────────────────────────
+# Pug genera HTML dinámico en el servidor antes de enviarlo al cliente.
+# El cliente recibe HTML puro, no ve código Pug.
+#
+# CONFIGURACIÓN en app.js:
+#   app.set('view engine', 'pug')
+#   app.set('views', './views')
+#
+# RENDERIZADO:
+#   res.render('nombre_plantilla', { variable: valor })
+#
+# SINTAXIS PUG (sin corchetes, basada en indentación):
+#   html
+#     head
+#       title= titulo          ← variable
+#     body
+#       h1 Texto estático
+#       p Hola, #{nombre}       ← interpolación
+#       each item in items      ← bucle
+#         li= item
+#
+# DIFERENCIA con archivos estáticos:
+#   /public/index.html  → Express lo sirve del disco tal cual (ESTÁTICO)
+#   /t1 (pug)          → Express ejecuta la plantilla + inyecta datos (DINÁMICO)
+###############################################################################
+
+# ── 15.1 Plantilla básica con variables ────────────────────────────────────
+# Renderiza views/t1.pug con título, mensaje y array de items.
+# Devuelve HTML completo generado en el servidor.
+GET http://localhost:3333/t1
+
+###
+
+# ── 15.2 Perfil de usuario dinámico ────────────────────────────────────────
+# El nombre viene de la URL (parámetro de ruta :nombre).
+# Renderiza views/usuario.pug con los datos del usuario.
+# Prueba con diferentes nombres:
+GET http://localhost:3333/usuario/Luis
+
+###
+
+GET http://localhost:3333/usuario/Ana
+
+###
+
+GET http://localhost:3333/usuario/CodeCrypto
+
+###
+
+# LECCIÓN: con SSP, el mismo template genera páginas completamente distintas
+# según los datos que pase el servidor. Es la base de frameworks como EJS, Handlebars, Pug.
+###############################################################################
+
+
+###############################################################################
+# 16. ORGANIZACIÓN CON EXPRESS ROUTER
+# ─────────────────────────────────────
+# Express Router permite separar las rutas en módulos independientes.
+#
+# ESTRUCTURA:
+#   routes/
+#     clientes.js  → app.use('/api/clientes',  router)
+#     productos.js → app.use('/api/productos', router)
+#     facturas.js  → app.use('/api/facturas',  router)
+#
+# PATRÓN:
+#   const router = express.Router()
+#   router.get('/', handler)       // → GET /api/clientes
+#   router.get('/:id', handler)    // → GET /api/clientes/:id
+#   module.exports = { clientes: router }
+###############################################################################
+
+# ══ ROUTER CLIENTES (/api/clientes) ═══════════════════════════════════════
+
+# ── 16.1 Listar todos los clientes ─────────────────────────────────────────
+GET http://localhost:3333/api/clientes
+
+###
+
+# ── 16.2 Obtener un cliente por ID ─────────────────────────────────────────
+GET http://localhost:3333/api/clientes/1
+
+###
+
+GET http://localhost:3333/api/clientes/99
+# → 404 Not Found (cliente inexistente)
+
+###
+
+# ── 16.3 Crear un nuevo cliente ────────────────────────────────────────────
+POST http://localhost:3333/api/clientes
+Content-Type: application/json
+
+{
+  "nombre": "Mi Nueva Empresa",
+  "email": "contacto@miempresa.com",
+  "pais": "España"
+}
+
+###
+
+# ── 16.4 Actualizar un cliente ─────────────────────────────────────────────
+PUT http://localhost:3333/api/clientes/1
+Content-Type: application/json
+
+{
+  "nombre": "Empresa ACME Actualizada",
+  "email": "nuevo@acme.com"
+}
+
+###
+
+# ── 16.5 Eliminar un cliente ───────────────────────────────────────────────
+DELETE http://localhost:3333/api/clientes/4
+
+###
+
+# ══ ROUTER PRODUCTOS (/api/productos) ════════════════════════════════════
+
+# ── 16.6 Listar todos los productos ────────────────────────────────────────
+GET http://localhost:3333/api/productos
+
+###
+
+# ── 16.7 Filtrar por categoría (query string) ──────────────────────────────
+GET http://localhost:3333/api/productos?categoria=Electrónica
+
+###
+
+# ── 16.8 Obtener un producto por ID ────────────────────────────────────────
+GET http://localhost:3333/api/productos/3
+
+###
+
+# ── 16.9 Crear un nuevo producto ───────────────────────────────────────────
+POST http://localhost:3333/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Ratón Inalámbrico",
+  "precio": 45.99,
+  "categoria": "Periféricos",
+  "stock": 50
+}
+
+###
+
+# ── 16.10 Actualizar precio de un producto ─────────────────────────────────
+PUT http://localhost:3333/api/productos/1
+Content-Type: application/json
+
+{
+  "precio": 1199.99,
+  "stock": 20
+}
+
+###
+
+# ── 16.11 Eliminar un producto ─────────────────────────────────────────────
+DELETE http://localhost:3333/api/productos/5
+
+###
+
+# ══ ROUTER FACTURAS (/api/facturas) ══════════════════════════════════════
+
+# ── 16.12 Listar todas las facturas ────────────────────────────────────────
+GET http://localhost:3333/api/facturas
+
+###
+
+# ── 16.13 Filtrar facturas por estado ──────────────────────────────────────
+GET http://localhost:3333/api/facturas?estado=pendiente
+
+###
+
+# ── 16.14 Filtrar facturas por cliente ─────────────────────────────────────
+GET http://localhost:3333/api/facturas?clienteId=1
+
+###
+
+# ── 16.15 Filtrar por estado Y cliente ─────────────────────────────────────
+GET http://localhost:3333/api/facturas?estado=pagada&clienteId=1
+
+###
+
+# ── 16.16 Obtener una factura concreta ─────────────────────────────────────
+GET http://localhost:3333/api/facturas/F2024001
+
+###
+
+# ── 16.17 Crear una nueva factura ──────────────────────────────────────────
+POST http://localhost:3333/api/facturas
+Content-Type: application/json
+
+{
+  "clienteId": 2,
+  "monto": 750.50
+}
+
+###
+
+# ── 16.18 Cambiar el estado de una factura (PATCH parcial) ─────────────────
+# PATCH es más correcto que PUT cuando solo se actualiza UN campo.
+PATCH http://localhost:3333/api/facturas/F2024002/estado
+Content-Type: application/json
+
+{
+  "estado": "pagada"
+}
+
+###
+
+PATCH http://localhost:3333/api/facturas/F2024004/estado
+Content-Type: application/json
+
+{
+  "estado": "cancelada"
+}
+
+###
+
+# ── 16.19 Estado inválido → 400 Bad Request ────────────────────────────────
+PATCH http://localhost:3333/api/facturas/F2024001/estado
+Content-Type: application/json
+
+{
+  "estado": "inventado"
+}
+
+###
+
+# BUENAS PRÁCTICAS ROUTER:
+#   1. Un archivo de router por recurso/entidad (clientes, productos, facturas)
+#   2. Usa module.exports con nombre descriptivo ({ clientes: router })
+#   3. Cada router puede tener sus propios middlewares de autenticación
+#   4. Usa PATCH para actualizaciones parciales, PUT para reemplazar completo
+#   5. Devuelve siempre un status HTTP semánticamente correcto
+#      200 → ok, 201 → creado, 400 → datos incorrectos, 404 → no encontrado
+###############################################################################
+
+
+###############################################################################
+# 17. ERRORES HTTP – 404 NOT FOUND y 500 INTERNAL SERVER ERROR
+# ─────────────────────────────────────────────────────────────
+# Express permite capturar globalmente rutas inexistentes y errores del servidor.
+#
+# 404: se define con app.get('*', handler) AL FINAL de todas las rutas.
+#      Express solo llega aquí cuando ninguna ruta anterior coincidió.
+#
+# 500: se define con app.use((err, req, res, next) => { ... }) con 4 parámetros.
+#      Express lo identifica como manejador de errores por la firma de 4 args.
+#      Se activa cuando una ruta hace: throw new Error(...) o llama next(error)
+###############################################################################
+
+# ── 17.1 Probar el 404 personalizado ───────────────────────────────────────
+# Cualquier ruta no definida redirige a /error_404.html
+GET http://localhost:3333/esta-ruta-no-existe
+
+###
+
+GET http://localhost:3333/pagina-inventada/subpagina/nada
+
+###
+
+# ── 17.2 Probar el manejador 500 ───────────────────────────────────────────
+# Esta ruta lanza throw new Error('esto falla') → activa el middleware de error
+GET http://localhost:3333/error
+
+###
+
+# ── 17.3 Error 500 directo (sin lanzar excepción) ──────────────────────────
+GET http://localhost:3333/error500
+
+###
+
+# ── 17.4 Error 400 (Bad Request) ───────────────────────────────────────────
+GET http://localhost:3333/error400
+
+###
+
+# LECCIÓN:
+#   El orden de los manejadores en Express es CRUCIAL:
+#   1. Primero van todos los middlewares (morgan, json, fileupload...)
+#   2. Luego todas las rutas normales
+#   3. Penúltimo: el manejador 404 (app.get('*'))  ← después de todas las rutas
+#   4. Último: el manejador 500 (app.use con 4 params)) ← siempre al final
+###############################################################################
+
+
+###############################################################################
+# 18. ANALIZAR LA PERFORMANCE
+# ─────────────────────────────
+# Mide cuántas peticiones por segundo puede manejar tu servidor.
+# Node.js es no-bloqueante → puede gestionar miles de conexiones concurrentes.
+#
+# HERRAMIENTAS:
+#   autocannon → benchmark desde Node.js  (npm i -g autocannon)
+#   ab         → Apache Benchmark (disponible con Docker: jordi/ab)
+#   curl       → medición rápida de una sola petición
+#
+# COMANDOS (ejecutar en terminal, no en REST Client):
+#
+#   npx autocannon -c 100 -d 10 http://localhost:3333/ping
+#     -c 100 → 100 conexiones concurrentes
+#     -d 10  → 10 segundos de duración
+#
+#   docker run --rm jordi/ab -v 2 http://TU_IP:3333/ping
+#     Usa TU IP local (no localhost) cuando ab corre en Docker
+#
+# RUTAS RECOMENDADAS PARA BENCHMARKING:
+###############################################################################
+
+# ── 18.1 Ruta más simple (sin DB, sin I/O) → máximo throughput posible ──────
+GET http://localhost:3333/ping
+
+###
+
+# ── 18.2 Ruta con DB → mide overhead de PostgreSQL ─────────────────────────
+GET http://localhost:3333/bdd/test
+
+###
+
+# ── 18.3 Ruta con MinIO → mide overhead del object storage ─────────────────
+GET http://localhost:3333/minio/buckets
+
+###
+
+# ── 18.4 Ruta con Blockchain → mide latencia de red a Infura ───────────────
+# IMPORTANTE: esta ruta tiene alta latencia (200-800ms) por la llamada a Infura
+# No uses esta ruta para benchmarking de rendimiento del servidor.
+GET http://localhost:3333/web3/eth/getblock/latest
+
+###
+
+# ── 18.5 Tiempo de respuesta con curl ──────────────────────────────────────
+# Ejecutar en terminal:
+#   curl -o NUL -s -w "Tiempo total: %{time_total}s | HTTP: %{http_code}\n" http://localhost:3333/ping
+#   curl -o NUL -s -w "Tiempo total: %{time_total}s | HTTP: %{http_code}\n" http://localhost:3333/bdd/test
+
+# INTERPRETACIÓN DE RESULTADOS autocannon:
+#   Req/sec 5.000-20.000 → muy bueno para Express básico
+#   Latency p50 < 5ms    → excelente para rutas sin I/O
+#   Latency p99 < 50ms   → aceptable bajo carga
+#   Errors: 0            → objetivo siempre
+#
+# LECCIONES:
+#   • Operaciones síncronas bloquean el Event Loop → mal rendimiento bajo carga
+#   • I/O asíncrono (DB, MinIO, HTTP) libera el Event Loop → buena concurrencia
+#   • Promise.all() ejecuta múltiples I/O en paralelo → reduce latencia total
+#   • Índices en PostgreSQL reducen drásticamente el tiempo de consulta
+###############################################################################

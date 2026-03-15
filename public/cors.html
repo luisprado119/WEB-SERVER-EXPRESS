@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CORS – Cross-Origin Resource Sharing</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 { font-size: 2rem; color: #60a5fa; font-weight: 700; }
+    header p  { color: #94a3b8; margin-top: .4rem; font-size: .95rem; }
+
+    .origin-info {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .origin-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: .5rem 1rem;
+      font-size: .82rem;
+      color: #94a3b8;
+    }
+    .origin-pill strong { color: #f1f5f9; }
+    .origin-pill .arrow { color: #60a5fa; font-size: 1.1rem; margin: 0 .5rem; }
+
+    /* ── Concepto ── */
+    .concept-box {
+      max-width: 860px;
+      margin: 0 auto 2rem;
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-left: 4px solid #60a5fa;
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      font-size: .88rem;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+    .concept-box strong { color: #f1f5f9; }
+    .concept-box code {
+      background: #0f1117;
+      border-radius: 4px;
+      padding: .1rem .4rem;
+      font-size: .82rem;
+      color: #93c5fd;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      max-width: 1100px;
+      margin: 2rem auto .75rem;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #475569;
+      padding-left: .25rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+    .card-header { display: flex; align-items: flex-start; gap: .75rem; }
+    .card-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .card-header h2 { font-size: .95rem; font-weight: 600; color: #f1f5f9; line-height: 1.3; }
+    .card-header small { display: block; color: #64748b; font-size: .76rem; margin-top: .2rem; }
+
+    /* ── Badges de resultado esperado ── */
+    .badge-row { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .badge {
+      font-size: .72rem; font-weight: 600; border-radius: 999px;
+      padding: .2rem .65rem;
+    }
+    .badge-red    { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+    .badge-green  { background: #052e16; color: #86efac; border: 1px solid #14532d; }
+    .badge-blue   { background: #0c1a4b; color: #93c5fd; border: 1px solid #1e3a8a; }
+    .badge-yellow { background: #1a1400; color: #fde68a; border: 1px solid #78350f; }
+
+    /* ── Cabecera HTTP ── */
+    .http-header {
+      background: #0a0d14;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: .5rem .75rem;
+      font-family: 'Consolas', monospace;
+      font-size: .78rem;
+      color: #64748b;
+    }
+    .http-header .key   { color: #93c5fd; }
+    .http-header .value { color: #86efac; }
+    .http-header .blocked { color: #f87171; }
+
+    /* ── Botón ── */
+    .btn {
+      width: 100%; padding: .5rem; border: none; border-radius: 7px;
+      font-size: .88rem; font-weight: 600; cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover  { opacity: .85; }
+    .btn:active { transform: scale(.97); }
+    .btn-blue   { background: #3b82f6; color: #fff; }
+    .btn-red    { background: #ef4444; color: #fff; }
+    .btn-green  { background: #22c55e; color: #fff; }
+    .btn-purple { background: #a855f7; color: #fff; }
+    .btn-orange { background: #f97316; color: #fff; }
+    .btn-teal   { background: #14b8a6; color: #fff; }
+
+    /* ── Resultado ── */
+    .result {
+      background: #0a0d14;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: .65rem .85rem;
+      font-family: 'Consolas', monospace;
+      font-size: .78rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 160px;
+      overflow-y: auto;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    .result.ok    { color: #4ade80; }
+    .result.error { color: #f87171; }
+    .result.warn  { color: #fbbf24; }
+
+    /* ── Diagrama de flujo ── */
+    .flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: .5rem; font-size: .8rem; flex-wrap: wrap;
+    }
+    .flow-box {
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 6px; padding: .3rem .7rem; color: #e2e8f0;
+    }
+    .flow-arrow { color: #475569; font-size: 1rem; }
+    .flow-block { color: #f87171; font-size: 1.2rem; font-weight: 700; }
+    .flow-allow { color: #4ade80; font-size: 1.2rem; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌐 CORS – Cross-Origin Resource Sharing</h1>
+    <p>Práctica completa: cómo el navegador controla las peticiones entre orígenes distintos</p>
+    <div class="origin-info">
+      <div class="origin-pill">
+        Esta página: <strong>http://localhost:3333</strong>
+        <span class="arrow">→ fetch →</span>
+        Servidor CORS: <strong>http://localhost:3345</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="concept-box" style="max-width:860px;margin:0 auto 2rem;">
+    <strong>¿Qué es CORS?</strong> El navegador aplica la <strong>Same-Origin Policy</strong>: 
+    bloquea cualquier <code>fetch</code> o <code>XHR</code> que vaya a un origen diferente 
+    (protocolo + dominio + puerto distintos). El servidor puede autorizar orígenes específicos 
+    añadiendo la cabecera <code>Access-Control-Allow-Origin</code>. 
+    <br><br>
+    <strong>Importante:</strong> CORS solo aplica en el <strong>navegador</strong>. 
+    curl, Postman y el REST Client no están sujetos a CORS.
+  </div>
+
+  <!-- ── FILA 1: Sin CORS vs CORS abierto ── -->
+  <p class="section-title">Casos básicos</p>
+  <div class="grid">
+
+    <!-- Caso 1: Sin CORS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#450a0a;">🚫</div>
+        <div>
+          <h2>Caso 1 — Sin cabeceras CORS</h2>
+          <small>GET http://localhost:3345/sin-cors</small>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-red">Bloqueado por el navegador</span>
+        <span class="badge badge-blue">Servidor responde 200</span>
+      </div>
+      <div class="concept-box" style="margin:0;">
+        El servidor responde correctamente, pero el navegador descarta la respuesta 
+        porque no hay <code>Access-Control-Allow-Origin</code>. 
+        Compruébalo en <strong>DevTools → Network</strong>.
+      </div>
+      <div class="flow">
+        <div class="flow-box">localhost:3333</div>
+        <div class="flow-arrow">→ fetch →</div>
+        <div class="flow-box">localhost:3345</div>
+        <div class="flow-arrow">→ 200 OK →</div>
+        <div class="flow-block">✗ BLOQUEADO</div>
+      </div>
+      <button class="btn btn-red" onclick="probar('sin-cors', 'r1')">
+        🚫 Probar (verás el error en consola)
+      </button>
+      <div id="r1" class="result">Pulsa el botón y abre DevTools (F12) → Consola…</div>
+    </div>
+
+    <!-- Caso 2: CORS abierto -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#052e16;">🌍</div>
+        <div>
+          <h2>Caso 2 — CORS abierto <code style="font-size:.8rem">*</code></h2>
+          <small>GET http://localhost:3345/cors-abierto</small>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-green">Permitido para todos</span>
+        <span class="badge badge-yellow">No apto con credenciales</span>
+      </div>
+      <div class="http-header">
+        <span class="key">Access-Control-Allow-Origin:</span>
+        <span class="value"> *</span>
+      </div>
+      <div class="flow">
+        <div class="flow-box">localhost:3333</div>
+        <div class="flow-arrow">→ fetch →</div>
+        <div class="flow-box">localhost:3345</div>
+        <div class="flow-arrow">→ 200 + ACAO:* →</div>
+        <div class="flow-allow">✓ OK</div>
+      </div>
+      <button class="btn btn-green" onclick="probar('cors-abierto', 'r2')">
+        🌍 Probar CORS abierto
+      </button>
+      <div id="r2" class="result">Resultado aquí…</div>
+    </div>
+
+  </div>
+
+  <!-- ── FILA 2: Restringido y whitelist ── -->
+  <p class="section-title">Control de orígenes</p>
+  <div class="grid">
+
+    <!-- Caso 3: CORS restringido -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#1e3a8a;">🔒</div>
+        <div>
+          <h2>Caso 3 — Solo un origen</h2>
+          <small>GET http://localhost:3345/cors-restringido</small>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-green">Solo localhost:3333</span>
+        <span class="badge badge-red">Otros orígenes bloqueados</span>
+      </div>
+      <div class="http-header">
+        <span class="key">Access-Control-Allow-Origin:</span>
+        <span class="value"> http://localhost:3333</span>
+      </div>
+      <div class="concept-box" style="margin:0;">
+        El servidor comprueba el header <code>Origin</code> de la petición 
+        y solo responde con el permiso si coincide con el origen configurado. 
+        Patrón típico en producción para proteger tu API.
+      </div>
+      <button class="btn btn-blue" onclick="probar('cors-restringido', 'r3')">
+        🔒 Probar CORS restringido
+      </button>
+      <div id="r3" class="result">Resultado aquí…</div>
+    </div>
+
+    <!-- Caso 4: Whitelist -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#2d1f4e;">📋</div>
+        <div>
+          <h2>Caso 4 — Lista blanca de orígenes</h2>
+          <small>GET http://localhost:3345/cors-whitelist</small>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-green">Lista de orígenes permitidos</span>
+      </div>
+      <div class="http-header">
+        <span class="key">Access-Control-Allow-Origin:</span>
+        <span class="value"> &lt;origen-validado&gt;</span>
+      </div>
+      <div class="concept-box" style="margin:0;">
+        Una función valida si el <code>Origin</code> está en la lista. 
+        Permite múltiples orígenes (frontend, móvil, staging…) sin usar <code>*</code>.
+        Si el origen no está en la lista, el servidor devuelve un error.
+      </div>
+      <button class="btn btn-purple" onclick="probar('cors-whitelist', 'r4')">
+        📋 Probar whitelist
+      </button>
+      <div id="r4" class="result">Resultado aquí…</div>
+    </div>
+
+  </div>
+
+  <!-- ── FILA 3: Completo y Preflight ── -->
+  <p class="section-title">Configuración avanzada</p>
+  <div class="grid">
+
+    <!-- Caso 5: CORS completo -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#1a3a2a;">⚙️</div>
+        <div>
+          <h2>Caso 5 — CORS con métodos y cabeceras</h2>
+          <small>GET http://localhost:3345/cors-completo</small>
+        </div>
+      </div>
+      <div class="http-header">
+        <span class="key">Access-Control-Allow-Origin:</span>
+        <span class="value"> http://localhost:3333</span><br>
+        <span class="key">Access-Control-Allow-Methods:</span>
+        <span class="value"> GET, POST, PUT, DELETE</span><br>
+        <span class="key">Access-Control-Allow-Headers:</span>
+        <span class="value"> Content-Type, Authorization</span><br>
+        <span class="key">Access-Control-Allow-Credentials:</span>
+        <span class="value"> true</span><br>
+        <span class="key">Access-Control-Expose-Headers:</span>
+        <span class="value"> X-Total-Count, X-Page</span>
+      </div>
+      <button class="btn btn-teal" onclick="probarCompleto()">
+        ⚙️ Probar CORS completo
+      </button>
+      <div id="r5" class="result">Resultado aquí…</div>
+    </div>
+
+    <!-- Caso 6: Preflight POST -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#3a1f1f;">✈️</div>
+        <div>
+          <h2>Caso 6 — Preflight (petición OPTIONS)</h2>
+          <small>POST http://localhost:3345/cors-post</small>
+        </div>
+      </div>
+      <div class="badge-row">
+        <span class="badge badge-blue">Navegador envía OPTIONS primero</span>
+        <span class="badge badge-green">Luego envía el POST real</span>
+      </div>
+      <div class="concept-box" style="margin:0;">
+        Para peticiones "complejas" (POST con JSON, PUT, DELETE, cabeceras personalizadas)
+        el navegador envía primero una petición <strong>OPTIONS</strong> automática 
+        para pedir permiso. Si el servidor responde correctamente, procede con la petición real.
+        Puedes ver las dos peticiones en <strong>DevTools → Network</strong>.
+      </div>
+      <button class="btn btn-orange" onclick="probarPost()">
+        ✈️ Probar POST con preflight
+      </button>
+      <div id="r6" class="result">Resultado aquí…</div>
+    </div>
+
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:3345'
+
+    function mostrar(id, texto, estado) {
+      const el = document.getElementById(id)
+      el.className = 'result ' + (estado === 'ok' ? 'ok' : estado === 'error' ? 'error' : 'warn')
+      el.textContent = texto
+    }
+
+    // ── Petición GET genérica ─────────────────────────────────────────────────
+
+    async function probar(ruta, resultId) {
+      mostrar(resultId, '⏳ Enviando petición…', 'warn')
+      try {
+        const r    = await fetch(`${BASE}/${ruta}`)
+        const json = await r.json()
+        mostrar(resultId,
+          `HTTP ${r.status} ${r.statusText}\n` +
+          `Access-Control-Allow-Origin: ${r.headers.get('access-control-allow-origin') || '(no presente)'}\n\n` +
+          JSON.stringify(json, null, 2),
+          'ok'
+        )
+      } catch (e) {
+        mostrar(resultId,
+          `❌ CORS BLOQUEADO\n\n` +
+          `Error: ${e.message}\n\n` +
+          `Abre DevTools (F12) → Consola para ver el mensaje completo.\n` +
+          `El servidor respondió 200, pero el navegador descartó la respuesta\n` +
+          `porque no había cabecera Access-Control-Allow-Origin.`,
+          'error'
+        )
+      }
+    }
+
+    // ── CORS completo (lee cabeceras expuestas) ───────────────────────────────
+
+    async function probarCompleto() {
+      mostrar('r5', '⏳ Enviando petición…', 'warn')
+      try {
+        const r    = await fetch(`${BASE}/cors-completo`, { credentials: 'include' })
+        const json = await r.json()
+        // Las cabeceras expuestas (X-Total-Count, X-Page) se pueden leer con JS
+        const total = r.headers.get('x-total-count')
+        const page  = r.headers.get('x-page')
+        mostrar('r5',
+          `HTTP ${r.status}\n` +
+          `Access-Control-Allow-Origin: ${r.headers.get('access-control-allow-origin')}\n` +
+          `X-Total-Count (expuesta): ${total}\n` +
+          `X-Page (expuesta): ${page}\n\n` +
+          JSON.stringify(json, null, 2),
+          'ok'
+        )
+      } catch (e) {
+        mostrar('r5', `❌ Error: ${e.message}`, 'error')
+      }
+    }
+
+    // ── POST con preflight ────────────────────────────────────────────────────
+
+    async function probarPost() {
+      mostrar('r6', '⏳ El navegador envía OPTIONS (preflight) y luego el POST…', 'warn')
+      try {
+        const r = await fetch(`${BASE}/cors-post`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ practica: 'CORS preflight', dato: 42 }),
+          credentials: 'include'
+        })
+        const json = await r.json()
+        mostrar('r6',
+          `HTTP ${r.status}\n` +
+          `Mira DevTools → Network: verás DOS peticiones:\n` +
+          `  1. OPTIONS /cors-post  (preflight automático)\n` +
+          `  2. POST    /cors-post  (la petición real)\n\n` +
+          JSON.stringify(json, null, 2),
+          'ok'
+        )
+      } catch (e) {
+        mostrar('r6', `❌ Error: ${e.message}`, 'error')
+      }
+    }
+  </script>
+
+</body>
+</html>

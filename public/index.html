@@ -1,11 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Server Express | CodeCrypto Academy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .top-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4aa, #00b4d8, #7c3aed);
+    }
+    .logo-bar {
+      position: fixed; top: 16px; right: 24px;
+      font-size: 0.72rem; color: #00d4aa;
+      letter-spacing: 1.5px; font-weight: 700;
+    }
+    .container { text-align: center; padding: 2rem; max-width: 680px; }
+    .icon { font-size: 3.5rem; margin-bottom: 1.5rem; }
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 800; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 0.8rem;
+    }
+    h1 span { color: #00d4aa; }
+    .subtitle {
+      color: #8b949e; font-size: 1rem; line-height: 1.7;
+      margin-bottom: 2.5rem; max-width: 480px; margin-left: auto; margin-right: auto;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0,212,170,0.1);
+      border: 1px solid rgba(0,212,170,0.3);
+      color: #00d4aa; padding: 0.3rem 1rem;
+      border-radius: 20px; font-size: 0.72rem;
+      letter-spacing: 2px; font-weight: 700;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+    }
+    .btn-main {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, #00d4aa, #00b4d8);
+      color: #0d1117; padding: 0.9rem 2.2rem;
+      border-radius: 10px; font-size: 1rem; font-weight: 700;
+      text-decoration: none; transition: all 0.2s; margin: 0.4rem;
+    }
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,170,0.35); }
+    .btn-sec {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent; color: #8b949e;
+      border: 1px solid #30363d; padding: 0.9rem 2.2rem;
+      border-radius: 10px; font-size: 1rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s; margin: 0.4rem;
+    }
+    .btn-sec:hover { border-color: #00d4aa; color: #e6edf3; }
+    .tech-grid {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      justify-content: center; margin-top: 3rem;
+    }
+    .tech {
+      padding: 0.3rem 0.8rem;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 6px; font-size: 0.75rem; color: #8b949e;
+    }
+    .tech:hover { border-color: #00d4aa; color: #e6edf3; }
+    .note {
+      margin-top: 2.5rem;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 8px; padding: 1rem 1.5rem;
+      font-size: 0.82rem; color: #8b949e; text-align: left;
+    }
+    .note code { color: #00d4aa; background: #0d1117; padding: 0.1em 0.4em; border-radius: 3px; }
+  </style>
 </head>
 <body>
-    Soy un archivo estático servido desde la carpeta "public" gracias a express.static() en app.js
+  <div class="top-bar"></div>
+  <div class="logo-bar">codecrypto.academy</div>
+
+  <div class="container">
+    <div class="icon">⚡</div>
+    <span class="badge">Web2.5 Technology · Node.js</span>
+    <h1>Web Server<br><span>Express.js</span></h1>
+    <p class="subtitle">
+      Práctica completa de desarrollo de servidores web con Node.js y Express.
+      17 secciones que van desde rutas básicas hasta Blockchain, Object Storage y plantillas SSP.
+    </p>
+
+    <div>
+      <a href="/guia.html" class="btn-main">📖 Ver Guía Completa</a>
+      <a href="/cors.html" class="btn-sec">🌐 Demo CORS</a>
+    </div>
+
+    <div class="tech-grid">
+      <span class="tech">Express 5</span>
+      <span class="tech">PostgreSQL</span>
+      <span class="tech">Web3.js v4</span>
+      <span class="tech">MinIO / S3</span>
+      <span class="tech">Pug Templates</span>
+      <span class="tech">Express Router</span>
+      <span class="tech">CORS</span>
+      <span class="tech">Morgan</span>
+      <span class="tech">dotenv</span>
+    </div>
+
+    <div class="note">
+      <strong style="color:#e6edf3">Servidor corriendo en:</strong>
+      <code>http://localhost:3333</code>
+      &nbsp;·&nbsp;
+      Archivo principal: <code>app.js</code>
+      &nbsp;·&nbsp;
+      Pruebas: <code>requests.http</code>
+    </div>
+  </div>
 </body>
 </html>

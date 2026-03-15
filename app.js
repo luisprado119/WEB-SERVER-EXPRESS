@@ -45,8 +45,17 @@
 //            (/minio/buckets/:bucket/files/:filename/v1)
 //       13.h Eliminar un fichero – patrón async/await
 //            (/minio/buckets/:bucket/files/:filename)
-//  14.  MANEJADORES GLOBALES DE ERROR (404 y 500)
-//  15.  INICIO DEL SERVIDOR
+//  14.  SERVER SIDE PAGES – Motor de plantillas Pug
+//       14.a Renderizar plantilla con variables dinámicas (/t1)
+//       14.b Plantilla con datos de usuario (/usuario/:nombre)
+//  15.  ORGANIZACIÓN CON EXPRESS ROUTER
+//       15.a Router de clientes  (/api/clientes)
+//       15.b Router de productos (/api/productos)
+//       15.c Router de facturas  (/api/facturas)
+//  16.  MANEJADORES GLOBALES DE ERROR
+//       16.a 404 Not Found   -> redirige a /error_404.html
+//       16.b 500 Error       -> middleware de error de Express (4 parámetros)
+//  17.  INICIO DEL SERVIDOR
 //
 // PARA EJECUTAR:
 //   npm install       -> instala dependencias (solo la primera vez)
@@ -84,6 +93,11 @@ const fs         = require('fs')
 const { Pool }   = require('pg')
 const { Web3 }   = require('web3')
 const Minio      = require('minio')
+
+// Routers – módulos que agrupan rutas relacionadas (sección 15)
+const clientesRouter   = require('./routes/clientes')
+const productosRouter  = require('./routes/productos')
+const facturasRouter   = require('./routes/facturas')
 
 
 // ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -339,12 +353,20 @@ app.get('/error400', (req, res) => {
   res.status(400).send('Error 400: Solicitud incorrecta (Bad Request)')
 })
 
+app.get('/error404', (req, res) => {
+  res.status(404).send('Error 404: Recurso no encontrado (Not Found)')
+})
+
 app.get('/error500', (req, res) => {
   res.status(500).send('Error 500: Error interno del servidor (Internal Server Error)')
 })
 
-app.get('/error404', (req, res) => {
-  res.status(404).send('Error 404: Recurso no encontrado (Not Found)')
+// Ruta que lanza una excepción real → activa el middleware de error 500 (sección 16.b)
+// Esta es la diferencia entre res.status(500) y throw new Error():
+//   res.status(500) → responde manualmente con 500 desde la ruta
+//   throw new Error() → Express captura la excepción y pasa al middleware de error (4 params)
+app.get('/error', (req, res) => {
+  throw new Error('esto falla — prueba del middleware de error 500')
 })
 
 
@@ -932,51 +954,146 @@ app.delete('/minio/buckets/:bucket/files/:filename', async (req, res) => {
 })
 
 
-// ────────────────────────────────────────────────────────────────────────────────────────────────
-// 14. MANEJADORES GLOBALES DE ERROR
-// ────────────────────────────────────────────────────────────────────────────────────────────────
-// DEBEN ir al FINAL, después de todas las rutas, para actuar como "red de seguridad".
-//
-// Fallback 404: captura cualquier petición a una ruta que no ha sido registrada arriba.
-//
-// Manejador de errores global: función con 4 parámetros (err, req, res, next).
-//   Express lo reconoce como manejador de errores por tener exactamente 4 parámetros.
-//   Se activa cuando alguna ruta llama a next(error) o lanza una excepción no capturada.
-//   En producción se oculta el stack trace para no exponer detalles internos.
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Ruta no encontrada', path: req.originalUrl })
+
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// 14. SERVER SIDE PAGES – Motor de plantillas Pug
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// Los motores de plantillas (template engines) permiten generar HTML dinámico en el servidor
+// combinando una plantilla estática con datos variables en tiempo de petición.
+//
+// PUG (antes llamado JADE) es el motor más popular para Express.
+//   - Sintaxis basada en indentación (sin corchetes ni etiquetas de cierre)
+//   - Se compila en el servidor → el cliente recibe HTML puro
+//   - Variables: #{variable}  o  interpolación directa en atributos
+//
+// DIFERENCIA con archivos estáticos:
+//   Estático  → el archivo ya está en disco y se sirve tal cual (HTML fijo)
+//   Plantilla → el servidor genera el HTML en tiempo real con datos variables
+//
+// CONFIGURACIÓN:
+//   app.set('view engine', 'pug')  → indica a Express qué motor usar
+//   app.set('views', './views')    → carpeta donde busca las plantillas (por defecto './views')
+//
+// RENDERIZADO:
+//   res.render('nombre_plantilla', { clave: valor })
+//   El objeto de variables es accesible en la plantilla como variables locales.
+
+app.set('view engine', 'pug')
+app.set('views', path.join(__dirname, 'views'))
+
+// 14.a Plantilla básica con un par de variables pasadas desde el servidor
+//      Accede a: http://localhost:3333/t1
+app.get('/t1', (req, res) => {
+  res.render('t1', {
+    titulo:  'Motor de plantillas Pug',
+    mensaje: 'Pug genera HTML dinámico en el servidor con Node.js + Express',
+    items:   ['Sintaxis limpia sin corchetes', 'Variables con #{var}', 'Bucles y condicionales', 'Herencia de plantillas (extends/block)']
+  })
 })
 
-app.use((err, req, res, next) => {
-  console.error('[ERROR GLOBAL]', err)
-  res.status(err.status || 500).json({
-    error: err.message || 'Error interno',
-    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+// 14.b Plantilla personalizada: el nombre del usuario viene de la URL (:nombre)
+//      Accede a: http://localhost:3333/usuario/Ana
+app.get('/usuario/:nombre', (req, res) => {
+  const { nombre } = req.params
+  res.render('usuario', {
+    titulo:   `Perfil de ${nombre}`,
+    nombre:   nombre,
+    fecha:    new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+    horaISO:  new Date().toISOString()
   })
 })
 
 
 // ────────────────────────────────────────────────────────────────────────────────────────────────
-// 15. INICIO DEL SERVIDOR
+// 15. ORGANIZACIÓN CON EXPRESS ROUTER
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// A medida que la aplicación crece, tener todas las rutas en app.js se vuelve inmanejable.
+// Express Router permite dividir las rutas en módulos independientes:
+//
+//   routes/clientes.js   → gestiona /api/clientes/*
+//   routes/productos.js  → gestiona /api/productos/*
+//   routes/facturas.js   → gestiona /api/facturas/*
+//
+// DIAGRAMA:
+//   app.js  ──► /api/clientes  ──► routes/clientes.js
+//           ──► /api/productos ──► routes/productos.js
+//           ──► /api/facturas  ──► routes/facturas.js
+//
+// VENTAJAS:
+//   ✔ Código organizado y mantenible
+//   ✔ Cada módulo puede tener sus propios middlewares
+//   ✔ Facilita el trabajo en equipo (cada equipo trabaja en su router)
+//   ✔ Facilita los tests unitarios de cada grupo de rutas
+//
+// PATRÓN en cada archivo router:
+//   const router = express.Router()
+//   router.get('/', handler)    // → monta en la URL base definida en app.use()
+//   router.get('/:id', handler) // → monta en /api/clientes/:id
+//   module.exports = { clientes: router }
+
+app.use('/api/clientes',  clientesRouter.clientes)
+app.use('/api/productos', productosRouter.productos)
+app.use('/api/facturas',  facturasRouter.facturas)
+
+
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// 16. MANEJADORES GLOBALES DE ERROR
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+
+// ── 16.a 404 NOT FOUND ───────────────────────────────────────────────────────────────────────────
+// Este manejador se coloca AL FINAL, después de todas las rutas.
+// Express solo llega aquí si NINGUNA ruta anterior ha respondido a la petición.
+//
+// OPCIÓN 1 (texto plano):
+//   app.get('*path', (req, res) => res.status(404).send('Lo sentimos, no tenemos esto'))
+//
+// OPCIÓN 2 (página HTML personalizada) ← la que usamos:
+//   El cliente es redirigido a una página HTML de error con diseño propio.
+//   Esto mejora la experiencia de usuario frente a un mensaje de texto genérico.
+//
+// NOTA Express 5: el wildcard cambió de '*' a '*path' (wildcard con nombre obligatorio).
+//   Express 4: app.get('*',     handler)
+//   Express 5: app.get('*path', handler)  ← usamos esta porque tenemos express ^5
+
+app.get('*path', (req, res) => {
+  res.status(404).redirect('/error_404.html')
+})
+
+// ── 16.b 500 INTERNAL SERVER ERROR ───────────────────────────────────────────────────────────────
+// Middleware de error de Express: SIEMPRE tiene EXACTAMENTE 4 parámetros (err, req, res, next).
+// Express lo reconoce como manejador de errores por la firma de 4 parámetros.
+//
+// Se activa cuando:
+//   1. Una ruta lanza una excepción síncrona:  throw new Error('...')
+//   2. Se llama a next(error) desde una ruta o middleware asíncrono
+//
+// RUTA DE PRUEBA: GET /error  → lanza un Error deliberado para probar este manejador
+//
+// EN PRODUCCIÓN se debería loggear el error y enviar una respuesta genérica
+// (sin exponer el stack trace al cliente).
+
+app.use((err, req, res, next) => {
+  console.error('[ERROR 500]', err.stack || err.message)
+  res.status(500).send(`${err} — 500: Internal Server Error`)
+})
+
+
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// 17. INICIO DEL SERVIDOR
 // ────────────────────────────────────────────────────────────────────────────────────────────────
 // app.listen(puerto, callback) arranca el servidor HTTP en el puerto indicado.
 // process.env.PORT permite configurar el puerto por variable de entorno
 // (útil en plataformas cloud como Heroku, Railway, Render, etc.).
 // Si la variable no está definida, se usa 3333 como valor por defecto.
+//
+// IMPORTANTE: app.listen() va siempre AL FINAL, después de:
+//   - Todos los middlewares (app.use)
+//   - Todas las rutas (app.get, app.post, etc.)
+//   - El manejador 404 (app.get('*path'))
+//   - El manejador 500 (app.use con 4 parámetros)
 
 const PORT = parseInt(process.env.PORT) || 3333
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`)
 })
-
-app.get("/web3/balance/:address", async (req, res) => {
-  try {
-    const balance = await web3Provider.eth.getBalance(req.params.address)
-    res.send(balance)
-  } catch (error) {
-    res.status(500).send('Error obteniendo el balance')     
-  }
-})  
-
-

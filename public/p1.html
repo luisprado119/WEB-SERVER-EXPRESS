@@ -1,11 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>p1.html – Archivo Estático | CodeCrypto Academy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --accent: #00d4aa;
+      --text: #e6edf3; --muted: #8b949e; --border: #30363d; --radius: 10px;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    code { font-family: 'Cascadia Code','Consolas',monospace; background: rgba(0,0,0,.4); color: #79c0ff; padding: .15em .4em; border-radius: 4px; font-size: .87em; }
+
+    .top-bar { height: 3px; background: linear-gradient(90deg,#00d4aa,#00b4d8,#7c3aed); }
+
+    nav {
+      background: rgba(13,17,23,.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 56px; padding: 0 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: .5rem; }
+    .nav-brand em { color: var(--accent); font-style: normal; }
+    .nav-links { display: flex; gap: .3rem; }
+    .nav-links a { color: var(--muted); font-size: .82rem; padding: .35rem .7rem; border-radius: 6px; text-decoration: none; transition: all .15s; }
+    .nav-links a:hover { background: var(--bg2); color: var(--text); }
+
+    .center {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 2rem; flex-direction: column; text-align: center;
+    }
+    .card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-top: 3px solid var(--accent); border-radius: var(--radius);
+      padding: 2.5rem 2rem; max-width: 540px; width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 1.2rem; }
+    .badge { display: inline-block; background: rgba(0,212,170,.1); border: 1px solid rgba(0,212,170,.3); color: var(--accent); padding: .25rem .8rem; border-radius: 20px; font-size: .7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 1rem; }
+    h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: .6rem; }
+    h1 span { color: var(--accent); }
+    .subtitle { color: var(--muted); font-size: .92rem; line-height: 1.7; margin-bottom: 1.5rem; }
+
+    .url-display {
+      background: #0d1117; border: 1px solid var(--border);
+      border-radius: 8px; padding: .7rem 1rem;
+      font-family: 'Cascadia Code','Consolas',monospace; font-size: .88rem;
+      color: var(--accent); margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: .4rem; justify-content: center;
+    }
+    .url-method { background: rgba(63,185,80,.15); color: #3fb950; padding: .15rem .5rem; border-radius: 5px; font-size: .7rem; font-weight: 800; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1.5rem; }
+    .info-item { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: .7rem .9rem; text-align: left; }
+    .info-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: .2rem; }
+    .info-value { font-size: .85rem; font-weight: 600; color: var(--text); font-family: monospace; }
+    .info-value.green { color: var(--accent); }
+
+    .actions { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+    .btn { padding: .6rem 1.3rem; border-radius: 7px; text-decoration: none; font-size: .85rem; font-weight: 700; transition: all .18s; display: inline-flex; align-items: center; gap: .4rem; }
+    .btn-primary { background: linear-gradient(135deg,#00d4aa,#00b4d8); color: #0d1117; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 18px rgba(0,212,170,.3); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+
+    footer { text-align: center; padding: 1.5rem; color: var(--muted); font-size: .78rem; border-top: 1px solid var(--border); }
+    footer a { color: var(--accent); }
+  </style>
 </head>
 <body>
-    Soy la pagina p1.html, también un archivo estático servido desde la carpeta "public" gracias a express.static() en app.js
+<div class="top-bar"></div>
+
+<nav>
+  <div class="nav-brand">⚡ Web Server <em>Express</em></div>
+  <div class="nav-links">
+    <a href="/">Inicio</a>
+    <a href="/guia.html">Guía</a>
+    <a href="/myIndex.html">myIndex</a>
+  </div>
+</nav>
+
+<div class="center">
+  <div class="card">
+    <div class="icon">📄</div>
+    <span class="badge">Archivo Estático</span>
+    <h1>Soy <span>p1.html</span></h1>
+    <p class="subtitle">
+      También un archivo estático servido desde la carpeta <code>/public</code> gracias a <code>express.static()</code> en <code>app.js</code>. No necesita ninguna ruta definida.
+    </p>
+
+    <div class="url-display">
+      <span class="url-method">GET</span>
+      <span>http://localhost:3333/p1.html</span>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Carpeta</div>
+        <div class="info-value green">/public/</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">URL</div>
+        <div class="info-value green">/p1.html</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Middleware</div>
+        <div class="info-value">express.static()</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Ruta en app.js</div>
+        <div class="info-value">No necesaria</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="/guia.html" class="btn btn-primary">📖 Ver Guía</a>
+      <a href="/myIndex.html" class="btn btn-ghost">📁 Listado public/</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Práctica <a href="/guia.html">Web Server Express</a> · <strong style="color:var(--accent)">CodeCrypto Academy</strong>
+</footer>
 </body>
 </html>
